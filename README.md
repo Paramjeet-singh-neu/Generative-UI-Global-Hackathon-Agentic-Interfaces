@@ -4,6 +4,10 @@
 
 Welcome to the **Generative UI Global Hackathon: Agentic Interfaces**! This starter kit gives you a complete AI-powered application with durable conversation threads, an agent-driven canvas, real-world MCP integrations, and a deployable MCP App — wired up with CopilotKit, LangChain Deep Agents, Gemini, A2UI, Notion MCP (via mcp-use), Manufact, and Daytona.
 
+### CoachMe+ (boxing — team track)
+
+**CoachMe+** turns TwelveLabs video analysis into a **runtime-generated coaching workspace** (scores, drills, correction timeline, comparisons) — not a chat transcript. Open **`/coach`** after `npm run dev`. Agent mode: set **`COACHME_SKIP_NOTION=1`** in `apps/agent/.env`. Optional fast demo: **`COACHME_USE_CACHE=1`** loads `apps/agent/src/coaching_cache.json`.
+
 ## About this starter
 
 https://github.com/user-attachments/assets/f2a405c3-3cf4-44c8-bca3-2c8b8e6fed90

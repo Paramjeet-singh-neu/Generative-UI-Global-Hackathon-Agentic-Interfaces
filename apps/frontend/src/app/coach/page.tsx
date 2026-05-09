@@ -39,9 +39,6 @@ import type { CoachingData } from "@/lib/coaching/types";
 import type { AgentState } from "@/lib/leads/types";
 import { mergeAgentState } from "@/lib/leads/state";
 
-const COACH_SIDEBAR_INSTRUCTIONS =
-  "You are CoachMe+, an expert AI boxing coach. When the user says 'analyze', 'check my form', or drops a clip name, call analyze_boxing_clip. After analysis, ALWAYS call highlightTechnique on the lowest-scoring technique. When the user asks 'how do I fix X' or 'drill for X', call generateDrill — never just reply with text. When asked about improvement, call showComparison. Be encouraging but direct, like a real boxing coach.";
-
 function ClientOnly({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -110,34 +107,39 @@ function CoachCanvasInner() {
       focus: z.string(),
       reason: z.string().optional(),
     }),
-    render: ({ args }) => (
-      <div className="mb-3 border-l-4 border-l-[var(--accent-red)] pl-3">
-        <DrillCard
-          name={args.name}
-          reps={args.reps}
-          focus={args.focus}
-          reason={args.reason ?? ""}
-          onApprove={() => {
-            updateState((prev) => ({
-              ...prev,
-              approved_drills: [
-                ...new Set([...(prev.approved_drills ?? []), args.name]),
-              ],
-            }));
-            toast.success(`Logged: ${args.name}`);
-          }}
-          onSkip={() => {
-            updateState((prev) => ({
-              ...prev,
-              skipped_drills: [
-                ...new Set([...(prev.skipped_drills ?? []), args.name]),
-              ],
-            }));
-            toast.message(`Skipped: ${args.name}`);
-          }}
-        />
-      </div>
-    ),
+    render: ({ args }) => {
+      const drillName = args.name ?? "Drill";
+      const drillReps = args.reps ?? 10;
+      const drillFocus = args.focus ?? "";
+      return (
+        <div className="mb-3 border-l-4 border-l-[var(--accent-red)] pl-3">
+          <DrillCard
+            name={drillName}
+            reps={drillReps}
+            focus={drillFocus}
+            reason={args.reason ?? ""}
+            onApprove={() => {
+              updateState((prev) => ({
+                ...prev,
+                approved_drills: [
+                  ...new Set([...(prev.approved_drills ?? []), drillName]),
+                ],
+              }));
+              toast.success(`Logged: ${drillName}`);
+            }}
+            onSkip={() => {
+              updateState((prev) => ({
+                ...prev,
+                skipped_drills: [
+                  ...new Set([...(prev.skipped_drills ?? []), drillName]),
+                ],
+              }));
+              toast.message(`Skipped: ${drillName}`);
+            }}
+          />
+        </div>
+      );
+    },
   });
 
   useFrontendTool({
@@ -221,6 +223,9 @@ function CoachCanvasInner() {
       pushAgentState({
         coaching_data: data,
         coaching_status: "complete",
+        approved_drills: [],
+        skipped_drills: [],
+        clips_analyzed: 1,
       });
       toast.success("Loaded mock coaching JSON into agent state");
     } catch {
@@ -381,11 +386,6 @@ function CoachCanvasInner() {
       <CopilotSidebar
         defaultOpen
         width={420}
-        instructions={COACH_SIDEBAR_INSTRUCTIONS}
-        labels={{
-          title: "CoachMe+ 🥊",
-          initial: "Describe your clip or say 'analyze my drill'...",
-        }}
         className="coach-copilot-sidebar"
         input={{ disclaimer: () => null, className: "pb-6" }}
       />
@@ -429,7 +429,16 @@ function CoachHomePage() {
         className={`${drawerStyles.mainPanel} flex min-h-0 flex-col`}
         style={{ background: "var(--bg-primary)" }}
       >
-        <CopilotChatConfigurationProvider agentId="default" threadId={threadId}>
+        <CopilotChatConfigurationProvider
+          agentId="default"
+          threadId={threadId}
+          labels={{
+            modalHeaderTitle: "CoachMe+ 🥊",
+            welcomeMessageText:
+              "Describe your clip or ask to analyze your drill…",
+            chatInputPlaceholder: "Ask your coach…",
+          }}
+        >
           <CoachCanvasInner />
         </CopilotChatConfigurationProvider>
       </div>

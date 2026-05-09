@@ -20,6 +20,7 @@ import DrillCard from "./DrillCard";
 import FormScoreCard from "./FormScoreCard";
 import ScoreRing from "./ScoreRing";
 import SessionBar from "./SessionBar";
+import SessionScoreTrend from "./SessionScoreTrend";
 import SessionSummary from "./SessionSummary";
 
 const LOADING_LINES = [
@@ -331,6 +332,13 @@ export default function CoachingCanvas() {
         </button>
       </div>
 
+      {state.coaching_score_history && state.coaching_score_history.length >= 2 ? (
+        <SessionScoreTrend
+          before={state.coaching_score_history[0]!}
+          after={state.coaching_score_history[1]!}
+        />
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
           <h2 className="font-coach-heading mb-3 text-lg text-[var(--text-primary)]">
@@ -443,6 +451,7 @@ export default function CoachingCanvas() {
                 ...prev,
                 coaching_data: null,
                 coaching_status: "idle",
+                coaching_score_history: [],
               }))
             }
           />

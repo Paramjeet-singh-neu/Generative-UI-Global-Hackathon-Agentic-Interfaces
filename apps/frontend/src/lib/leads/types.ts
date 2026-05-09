@@ -95,6 +95,8 @@ export interface AgentState {
   skipped_drills?: string[];
   /** Count of successful clip analyses in this thread. */
   clips_analyzed?: number;
+  /** Last 1–2 overall scores from successful analyses (server-maintained; for canvas trend UI). */
+  coaching_score_history?: number[];
 }
 
 // Mirrors the Python `NotionHealth` TypedDict in

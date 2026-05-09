@@ -26,7 +26,10 @@
     "judge:coachme": "node -e \"console.log('\\nCoachMe+ demo path:\\n  1. npm run dev   (from repo root)\\n  2. Open http://localhost:3010/coach\\n  3. apps/agent/.env: COACHME_SKIP_NOTION=1, GEMINI_API_KEY, TWELVELABS_*\\n  4. Optional instant Pegasus: COACHME_USE_CACHE=1\\n')\"",
     "build": "npm run build --workspace frontend",
     "start": "npm run start --workspace frontend",
-    "lint": "npm run lint --workspace frontend"
+    "lint": "npm run lint --workspace frontend",
+    "test:agent": "cd apps/agent && uv run pytest",
+    "test:ui": "npm run test --workspace frontend",
+    "test": "npm run test:agent && npm run test:ui"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

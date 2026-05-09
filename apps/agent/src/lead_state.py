@@ -113,6 +113,8 @@ class LeadCanvasState(AgentState):
     approved_drills: NotRequired[Annotated[list[str], _replace]]
     skipped_drills: NotRequired[Annotated[list[str], _replace]]
     clips_analyzed: NotRequired[Annotated[int, _replace]]
+    # Last 1–2 overall scores from successful analyses (for deterministic progress UI).
+    coaching_score_history: NotRequired[Annotated[list[float], _replace]]
 
 
 class LeadStateMiddleware(AgentMiddleware[LeadCanvasState, Any]):  # type: ignore[type-arg]

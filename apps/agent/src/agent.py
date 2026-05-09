@@ -31,6 +31,8 @@ from langgraph.config import get_config
 from langgraph.prebuilt import InjectedState
 from langgraph.types import Command
 
+from .coachme_score_history import merge_coaching_score_history
+
 _COACHING_CACHE_PATH = os.path.join(os.path.dirname(__file__), "coaching_cache.json")
 
 
@@ -122,11 +124,16 @@ def analyze_boxing_clip(
         except (TypeError, ValueError):
             prev_n = 0
         clips_count = prev_n + 1
+        score_hist = merge_coaching_score_history(
+            st.get("coaching_score_history"),
+            data.get("overall_score"),
+        )
         return Command(
             update={
                 "coaching_data": data,
                 "coaching_status": "complete",
                 "clips_analyzed": clips_count,
+                "coaching_score_history": score_hist,
                 "messages": [ToolMessage(content=summary, tool_call_id=tool_call_id)],
             }
         )

@@ -16,6 +16,8 @@ export interface Drill {
   name: string;
   reps: number;
   focus: string;
+  /** Optional coach rationale (e.g. from `generateDrill`). */
+  reason?: string;
 }
 
 export interface CoachingData {

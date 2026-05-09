@@ -1,6 +1,9 @@
 "use client";
 
-interface SessionSummaryProps {
+import Confetti from "./Confetti";
+import ScoreRing from "./ScoreRing";
+
+interface Props {
   overallScore: number;
   clipsAnalyzed: number;
   drillsApproved: number;
@@ -12,39 +15,50 @@ export default function SessionSummary({
   clipsAnalyzed,
   drillsApproved,
   onAnalyzeAnother,
-}: SessionSummaryProps) {
+}: Props) {
+  const celebrate = overallScore >= 75;
+
   return (
-    <div className="mt-6 rounded-xl border border-border bg-gradient-to-r from-[#BEC2FF]/25 to-[#3D92E8]/15 p-5">
-      <h2 className="mb-3 text-lg font-bold text-foreground">
-        Session complete 🏆
-      </h2>
-      <div className="mb-4 grid grid-cols-3 gap-4 text-center">
-        <div>
-          <p className="text-3xl font-bold tabular-nums text-[#3D92E8]">
-            {overallScore}
-          </p>
-          <p className="text-xs text-muted-foreground">Overall score</p>
+    <div className="coach-card-surface relative mt-6 overflow-visible border-t-2 border-t-[var(--accent-red)] bg-gradient-to-br from-[#1a1a24] to-[#1e1e2e] p-5">
+      {celebrate ? <Confetti /> : null}
+      <div className="relative">
+        <h2 className="font-coach-heading mb-4 text-lg text-[var(--text-primary)]">
+          Round over 🏆
+        </h2>
+        <div className="mb-6 flex justify-center">
+          <ScoreRing
+            score={overallScore}
+            size={120}
+            strokeWidth={7}
+            label="Overall score"
+          />
         </div>
-        <div>
-          <p className="text-3xl font-bold tabular-nums text-[#3D92E8]">
-            {clipsAnalyzed}
-          </p>
-          <p className="text-xs text-muted-foreground">Clips analyzed</p>
+        <div className="mb-4 grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="font-coach-heading text-3xl font-bold text-[var(--text-primary)]">
+              {clipsAnalyzed}
+            </p>
+            <p className="font-coach-body text-xs text-[var(--text-secondary)]">
+              Clips analyzed
+            </p>
+          </div>
+          <div>
+            <p className="font-coach-heading text-3xl font-bold text-[var(--accent-green)]">
+              {drillsApproved}
+            </p>
+            <p className="font-coach-body text-xs text-[var(--text-secondary)]">
+              Drills logged
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-3xl font-bold tabular-nums text-[#3D92E8]">
-            {drillsApproved}
-          </p>
-          <p className="text-xs text-muted-foreground">Drills logged</p>
-        </div>
+        <button
+          type="button"
+          onClick={onAnalyzeAnother}
+          className="font-coach-body w-full rounded-xl bg-[var(--accent-red)] py-2.5 font-medium text-white transition-opacity hover:opacity-90"
+        >
+          Next round →
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={onAnalyzeAnother}
-        className="w-full rounded-lg bg-primary py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-      >
-        Analyze another clip →
-      </button>
     </div>
   );
 }

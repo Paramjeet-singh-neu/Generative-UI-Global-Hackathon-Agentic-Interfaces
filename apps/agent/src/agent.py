@@ -71,8 +71,8 @@ def _load_coaching_payload(video_id: str) -> Dict[str, Any]:
 @tool
 def analyze_boxing_clip(
     video_id: str,
+    state: Annotated[Dict[str, Any], InjectedState] = None,
     tool_call_id: Annotated[str, InjectedToolCallId] = "",
-    state: Annotated[Dict[str, Any] | None, InjectedState] = None,
 ) -> Command:
     """Analyze an indexed TwelveLabs clip (Pegasus): coaching payload aligned with `mock_coaching_data.json`.
 
@@ -107,12 +107,6 @@ def analyze_boxing_clip(
         else:
             data["drills"] = []
 
-        clips_prev = st.get("clips_analyzed", 0)
-        try:
-            clips_n = int(clips_prev)
-        except (TypeError, ValueError):
-            clips_n = 0
-
         n_t = len(data.get("techniques") or [])
         n_d = len(data.get("drills") or [])
         score = data.get("overall_score", "?")
@@ -122,11 +116,17 @@ def analyze_boxing_clip(
             f"{n_t} technique(s), {n_d} drill(s) after skipping {len(skipped)} session drill(s). "
             "Canvas updated — brief the athlete, then call highlightTechnique for the weakest technique."
         )
+        prev_raw = st.get("clips_analyzed")
+        try:
+            prev_n = int(prev_raw) if prev_raw is not None else 0
+        except (TypeError, ValueError):
+            prev_n = 0
+        clips_count = prev_n + 1
         return Command(
             update={
                 "coaching_data": data,
                 "coaching_status": "complete",
-                "clips_analyzed": clips_n + 1,
+                "clips_analyzed": clips_count,
                 "messages": [ToolMessage(content=summary, tool_call_id=tool_call_id)],
             }
         )

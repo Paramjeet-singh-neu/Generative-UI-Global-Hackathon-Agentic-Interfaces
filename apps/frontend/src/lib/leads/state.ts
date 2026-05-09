@@ -58,16 +58,10 @@ export function mergeAgentState(raw: unknown): AgentState {
     coaching_status: normalizeCoachingStatus(
       partial.coaching_status ?? initialState.coaching_status,
     ),
-    approved_drills: Array.isArray(partial.approved_drills)
-      ? partial.approved_drills
-      : initialState.approved_drills,
-    skipped_drills: Array.isArray(partial.skipped_drills)
-      ? partial.skipped_drills
-      : initialState.skipped_drills,
+    approved_drills: partial.approved_drills ?? initialState.approved_drills,
+    skipped_drills: partial.skipped_drills ?? initialState.skipped_drills,
     clips_analyzed:
-      partial.clips_analyzed !== undefined
-        ? Math.max(0, Number(partial.clips_analyzed) || 0)
-        : initialState.clips_analyzed,
+      partial.clips_analyzed ?? initialState.clips_analyzed,
   };
 }
 

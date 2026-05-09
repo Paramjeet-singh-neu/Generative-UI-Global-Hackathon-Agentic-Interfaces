@@ -1,0 +1,197 @@
+/* CoachMe+ dark sports-tech theme — scoped via .coach-app wrapper */
+
+:root {
+  --bg-primary: #0f0f13;
+  --bg-card: #1a1a24;
+  --bg-card-hover: #22222e;
+  --text-primary: #f0ece4;
+  --text-secondary: #9ca3af;
+  --accent-red: #e63946;
+  --accent-amber: #f4a261;
+  --accent-green: #2a9d8f;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+}
+
+.coach-app {
+  --coach-ring-track: #2a2a36;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+.coach-app .coach-card-surface {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.coach-app .coach-card-surface:hover {
+  background: var(--bg-card-hover);
+}
+
+.coach-app .coach-card-interactive:hover {
+  background: var(--bg-card-hover);
+}
+
+@keyframes coach-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.coach-float-emoji {
+  animation: coach-float 3s ease-in-out infinite;
+}
+
+@keyframes coach-dot-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.coach-dot-pulse {
+  animation: coach-dot-pulse 1s ease-in-out infinite;
+  background-color: var(--accent-red);
+}
+
+.coach-dot-pulse-1 {
+  animation-delay: 0s;
+}
+.coach-dot-pulse-2 {
+  animation-delay: 0.2s;
+}
+.coach-dot-pulse-3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes coach-indeterminate {
+  0% {
+    transform: translateX(-35%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.coach-indeterminate-bar {
+  height: 2px;
+  width: 35%;
+  background: var(--accent-red);
+  animation: coach-indeterminate 1.2s ease-in-out infinite;
+}
+
+.coach-stagger-item {
+  transition:
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.font-coach-heading {
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.font-coach-body {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
+
+/* Copilot sidebar on /coach — dark shell when supported */
+.coach-copilot-sidebar {
+  --copilot-kit-primary-color: var(--accent-red);
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.coach-copilot-sidebar [class*="CopilotChat"] {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* Only while /coach is mounted — set `html.coach-copilot-route` in coach page */
+html.coach-copilot-route .coach-copilot-sidebar,
+html.coach-copilot-route [class*="copilotkit-sidebar"],
+html.coach-copilot-route [data-copilotkit-chat] {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+html.coach-copilot-route [class*="copilotkit-chat-container"],
+html.coach-copilot-route [class*="CopilotChat"] {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+html.coach-copilot-route [class*="copilotkit-thread"],
+html.coach-copilot-route [class*="CopilotKitThread"] {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+@keyframes coach-pulse-border {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(230, 57, 70, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(230, 57, 70, 0.25);
+  }
+}
+
+.coach-worst-technique-pulse {
+  animation: coach-pulse-border 2s ease-in-out infinite;
+}
+
+/* Rotating conic halo behind overall ScoreRing */
+.coach-overall-ring-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coach-overall-ring-glow {
+  position: absolute;
+  width: 184px;
+  height: 184px;
+  left: 50%;
+  top: 50%;
+  margin-left: -92px;
+  margin-top: -92px;
+  border-radius: 50%;
+  opacity: 0.42;
+  filter: blur(14px);
+  z-index: 0;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    var(--accent-red),
+    var(--accent-amber),
+    var(--accent-green),
+    var(--accent-red)
+  );
+  animation: coach-spin-glow 4s linear infinite;
+}
+
+.coach-overall-ring-inner {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes coach-spin-glow {
+  to {
+    transform: rotate(360deg);
+  }
+}

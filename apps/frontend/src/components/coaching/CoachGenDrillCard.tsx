@@ -20,7 +20,8 @@ interface Props {
 export default function CoachGenDrillCard({ name, reps, focus, reason }: Props) {
   const { agent } = useAgent();
   const merged = mergeAgentState(agent?.state);
-  const done = merged.approved_drills.includes(name);
+  const approvedList = merged.approved_drills ?? [];
+  const done = approvedList.includes(name);
 
   const push = (patch: Partial<typeof merged>) => {
     if (!agent) return;
@@ -40,17 +41,19 @@ export default function CoachGenDrillCard({ name, reps, focus, reason }: Props) 
         disabled={done}
         onApprove={() => {
           const s = mergeAgentState(agent?.state);
-          if (s.approved_drills.includes(name)) return;
+          const cur = s.approved_drills ?? [];
+          if (cur.includes(name)) return;
           push({
-            approved_drills: [...s.approved_drills, name],
+            approved_drills: [...cur, name],
           });
           toast.success(`Logged: ${name}`);
         }}
         onSkip={() => {
           const s = mergeAgentState(agent?.state);
-          if (s.skipped_drills.includes(name)) return;
+          const cur = s.skipped_drills ?? [];
+          if (cur.includes(name)) return;
           push({
-            skipped_drills: [...s.skipped_drills, name],
+            skipped_drills: [...cur, name],
           });
           toast.message(`Skipped: ${name}`);
         }}

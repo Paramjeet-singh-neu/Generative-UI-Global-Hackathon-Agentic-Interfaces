@@ -16,7 +16,7 @@ import { ThreadsDrawer } from "@/components/threads-drawer";
 import drawerStyles from "@/components/threads-drawer/threads-drawer.module.css";
 
 import type { AgentState, Lead, LeadFilter } from "@/lib/leads/types";
-import { initialState, emptyFilter } from "@/lib/leads/state";
+import { emptyFilter, initialState, mergeAgentState } from "@/lib/leads/state";
 import { applyFilter } from "@/lib/leads/derive";
 import { applyPatch, revertPatch } from "@/lib/leads/optimistic";
 
@@ -54,23 +54,6 @@ const leadShape = z.object({
   message: z.string().default(""),
   submitted_at: z.string().default(""),
 });
-
-// Merge raw agent state into the canonical AgentState shape so consumers can
-// rely on every nested field existing (filter, header, sync, etc.).
-function mergeAgentState(raw: unknown): AgentState {
-  const partial =
-    raw && typeof raw === "object" ? (raw as Partial<AgentState>) : {};
-  return {
-    ...initialState,
-    ...partial,
-    filter: { ...initialState.filter, ...(partial.filter ?? {}) },
-    header: { ...initialState.header, ...(partial.header ?? {}) },
-    sync: { ...initialState.sync, ...(partial.sync ?? {}) },
-    leads: partial.leads ?? initialState.leads,
-    highlightedLeadIds:
-      partial.highlightedLeadIds ?? initialState.highlightedLeadIds,
-  };
-}
 
 // v2 `useFrontendTool({ render })` registers the closure once and never
 // updates it, so any render that captures `agent.state` directly is stuck

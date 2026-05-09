@@ -1,4 +1,17 @@
+import type { CoachingAgentStatus } from "../coaching/types";
 import type { AgentState, LeadFilter } from "./types";
+
+function normalizeCoachingStatus(raw: unknown): CoachingAgentStatus {
+  if (
+    raw === "idle" ||
+    raw === "analyzing" ||
+    raw === "complete" ||
+    raw === "error"
+  ) {
+    return raw;
+  }
+  return "idle";
+}
 
 export const emptyFilter: LeadFilter = {
   workshops: [],
@@ -18,7 +31,32 @@ export const initialState: AgentState = {
     subtitle: "Live from Notion",
   },
   sync: { databaseId: "", databaseTitle: "", syncedAt: null },
+  coaching_data: null,
+  coaching_status: "idle",
 };
+
+/** Normalize LangGraph / CopilotKit agent snapshots into `AgentState`. */
+export function mergeAgentState(raw: unknown): AgentState {
+  const partial =
+    raw && typeof raw === "object" ? (raw as Partial<AgentState>) : {};
+  return {
+    ...initialState,
+    ...partial,
+    filter: { ...initialState.filter, ...(partial.filter ?? {}) },
+    header: { ...initialState.header, ...(partial.header ?? {}) },
+    sync: { ...initialState.sync, ...(partial.sync ?? {}) },
+    leads: partial.leads ?? initialState.leads,
+    highlightedLeadIds:
+      partial.highlightedLeadIds ?? initialState.highlightedLeadIds,
+    coaching_data:
+      partial.coaching_data !== undefined
+        ? partial.coaching_data
+        : initialState.coaching_data,
+    coaching_status: normalizeCoachingStatus(
+      partial.coaching_status ?? initialState.coaching_status,
+    ),
+  };
+}
 
 export function isFilterEmpty(f: LeadFilter): boolean {
   return (

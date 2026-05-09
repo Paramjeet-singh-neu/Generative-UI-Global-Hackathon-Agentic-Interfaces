@@ -107,6 +107,9 @@ class LeadCanvasState(AgentState):
     selectedLeadId: NotRequired[Annotated[Optional[str], _replace]]
     header: NotRequired[Annotated[_Header, _replace]]
     sync: NotRequired[Annotated[_SyncMeta, _replace]]
+    # CoachMe+ canvas (AG-UI / useAgent). Populated by analyze_boxing_clip Command(update=).
+    coaching_data: NotRequired[Annotated[Any, _replace]]
+    coaching_status: NotRequired[Annotated[str, _replace]]
 
 
 class LeadStateMiddleware(AgentMiddleware[LeadCanvasState, Any]):  # type: ignore[type-arg]

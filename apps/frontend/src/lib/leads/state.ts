@@ -33,6 +33,9 @@ export const initialState: AgentState = {
   sync: { databaseId: "", databaseTitle: "", syncedAt: null },
   coaching_data: null,
   coaching_status: "idle",
+  approved_drills: [],
+  skipped_drills: [],
+  clips_analyzed: 0,
 };
 
 /** Normalize LangGraph / CopilotKit agent snapshots into `AgentState`. */
@@ -55,6 +58,10 @@ export function mergeAgentState(raw: unknown): AgentState {
     coaching_status: normalizeCoachingStatus(
       partial.coaching_status ?? initialState.coaching_status,
     ),
+    approved_drills: partial.approved_drills ?? initialState.approved_drills,
+    skipped_drills: partial.skipped_drills ?? initialState.skipped_drills,
+    clips_analyzed:
+      partial.clips_analyzed ?? initialState.clips_analyzed,
   };
 }
 

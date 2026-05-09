@@ -195,3 +195,119 @@ html.coach-copilot-route [class*="CopilotKitThread"] {
     transform: rotate(360deg);
   }
 }
+
+/* ── Coach demo layout: single-column canvas (hide starter threads drawer) ── */
+html.coach-copilot-route .coach-demo-layout {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html.coach-copilot-route .coach-demo-layout aside[aria-label="Threads drawer"] {
+  display: none !important;
+}
+
+/* Dev-only overlays (Next.js tooling bubbles — hide during coach demo) */
+html.coach-copilot-route [data-nextjs-dev-overlay-button],
+html.coach-copilot-route [data-next-badge-root] {
+  display: none !important;
+}
+
+/* ── Motion + polish (CoachMe+ demo) ── */
+html.coach-copilot-route * {
+  scroll-behavior: smooth;
+}
+
+html.coach-copilot-route [class*="rounded-2xl"] {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+html.coach-copilot-route [class*="rounded-2xl"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+html.coach-copilot-route button:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+html.coach-copilot-route .stagger-item,
+html.coach-copilot-route .coach-stagger-item {
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(230, 57, 70, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(230, 57, 70, 0.3);
+  }
+}
+
+@keyframes marker-pulse {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.28);
+  }
+}
+
+.coach-marker-high {
+  animation: marker-pulse 2s ease-in-out infinite;
+}
+
+@keyframes count-glow {
+  0% {
+    text-shadow: none;
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(230, 57, 70, 0.4);
+  }
+  100% {
+    text-shadow: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes float-subtle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Reduce demo noise in coach route */
+html.coach-copilot-route [class*="issue-badge"],
+html.coach-copilot-route [aria-label*="issue"] {
+  display: none !important;
+}
+
+html.coach-copilot-route [class*="PoweredByCopilotKit"],
+html.coach-copilot-route [data-copilotkit-branding] {
+  display: none !important;
+}
+
+html.coach-copilot-route button[aria-label="Send"] {
+  background-color: var(--accent-red) !important;
+  border-radius: 12px !important;
+}

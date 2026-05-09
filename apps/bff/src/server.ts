@@ -6,6 +6,11 @@ import {
 } from "@copilotkit/runtime/v2";
 import { LangGraphAgent } from "@copilotkit/runtime/langgraph";
 
+/** LangGraph + in-memory runner — no Docker Intelligence / Postgres threads. */
+const sseOnlyRuntime =
+  process.env.COPILOT_RUNTIME_SSE_ONLY === "1" ||
+  process.env.COPILOT_RUNTIME_SSE_ONLY === "true";
+
 const intelligence = new CopilotKitIntelligence({
   apiKey:
     process.env.INTELLIGENCE_API_KEY ?? "cpk_sPRVSEED_seed0privat0longtoken00",
@@ -25,25 +30,42 @@ const agent = new LangGraphAgent({
   },
 });
 
+const disableHttpMcp =
+  process.env.BFF_DISABLE_HTTP_MCP === "1" ||
+  process.env.BFF_DISABLE_HTTP_MCP === "true";
+
+const sharedRuntimeFields = {
+  licenseToken: process.env.COPILOTKIT_LICENSE_TOKEN,
+  agents: { default: agent },
+  openGenerativeUI: true as const,
+  a2ui: { injectA2UITool: true },
+  // Optional HTTP MCP (mcp-use Manufact). Boxing-coach MCP is stdio-side in the LangGraph agent.
+  ...(disableHttpMcp
+    ? {}
+    : {
+        mcpApps: {
+          servers: [
+            {
+              type: "http" as const,
+              url: process.env.MCP_SERVER_URL || "http://localhost:3001/mcp",
+              serverId: "manufact_local",
+            },
+          ],
+        },
+      }),
+};
+
 const app = createCopilotEndpoint({
   basePath: "/api/copilotkit",
-  runtime: new CopilotRuntime({
-    intelligence,
-    identifyUser: () => ({ id: "default", name: "Hackathon User" }),
-    licenseToken: process.env.COPILOTKIT_LICENSE_TOKEN,
-    agents: { default: agent },
-    openGenerativeUI: true,
-    a2ui: { injectA2UITool: true },
-    mcpApps: {
-      servers: [
-        {
-          type: "http",
-          url: process.env.MCP_SERVER_URL || "http://localhost:3001/mcp",
-          serverId: "manufact_local",
+  runtime: new CopilotRuntime(
+    sseOnlyRuntime
+      ? sharedRuntimeFields
+      : {
+          ...sharedRuntimeFields,
+          intelligence,
+          identifyUser: () => ({ id: "default", name: "Hackathon User" }),
         },
-      ],
-    },
-  }),
+  ),
 });
 
 // Rewrite known 5xx error bodies into structured `{ error, hint, command }`
@@ -63,6 +85,24 @@ app.use("*", async (c, next) => {
   } catch {
     return;
   }
+  const isThreadInitGeneric =
+    body.includes("Failed to initialize thread") &&
+    !body.includes("threads_user_id_fkey") &&
+    !body.includes("user_id");
+  if (isThreadInitGeneric) {
+    const remapped = {
+      error: "CopilotKit Intelligence unavailable",
+      hint:
+        "Docker Intelligence is not running. Either run `npm run dev` from the repo root, or set COPILOT_RUNTIME_SSE_ONLY=1 in `.env` and restart this BFF (LangGraph chat works; durable threads & thread drawer stay offline until Intelligence is up).",
+      command: "sse-only-or-docker",
+    };
+    c.res = new Response(JSON.stringify(remapped), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+    return;
+  }
+
   const isThreadFkey =
     body.includes("threads_user_id_fkey") ||
     (body.includes("Failed to initialize thread") &&
@@ -102,8 +142,14 @@ app.use("*", async (c, next) => {
   }
 });
 
-const port = Number(process.env.PORT) || 4000;
+// Align with apps/frontend/next.config.ts default `BFF_URL` (http://localhost:4010).
+const port = Number(process.env.PORT) || 4010;
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`BFF ready at http://localhost:${port}`);
+  if (sseOnlyRuntime) {
+    console.log(
+      "[bff] COPILOT_RUNTIME_SSE_ONLY — Intelligence threads disabled; using in-memory SSE runner.",
+    );
+  }
 });

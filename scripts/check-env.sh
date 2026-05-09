@@ -23,11 +23,27 @@ cd "$REPO_ROOT"
 PROBLEMS=()
 SKIP_NOTION_AFTER_LOAD=0
 
+# CoachMe+ / SSE-only: skip Docker when explicitly opted out (no Intelligence stack).
+SKIP_DOCKER_CHECK=0
+if [[ "${SKIP_DOCKER_PREFLIGHT:-}" =~ ^(1|true|yes)$ ]]; then
+  SKIP_DOCKER_CHECK=1
+fi
+ROOT_ENV="$REPO_ROOT/.env"
+AGENT_ENV_PRE="$REPO_ROOT/apps/agent/.env"
+if [[ -f "$ROOT_ENV" ]] && grep -qE '^[[:space:]]*COACHME_ZERO_DOCKER=(1|true|yes)' "$ROOT_ENV" 2>/dev/null; then
+  SKIP_DOCKER_CHECK=1
+fi
+if [[ -f "$AGENT_ENV_PRE" ]] && grep -qE '^[[:space:]]*COACHME_ZERO_DOCKER=(1|true|yes)' "$AGENT_ENV_PRE" 2>/dev/null; then
+  SKIP_DOCKER_CHECK=1
+fi
+
 # ---------- 1. Docker daemon -------------------------------------------------
-if ! command -v docker >/dev/null 2>&1; then
-  PROBLEMS+=("Docker isn't installed. Install Docker Desktop and re-try.")
-elif ! docker info >/dev/null 2>&1; then
-  PROBLEMS+=("Docker isn't running. Start Docker Desktop and re-try.")
+if [[ "$SKIP_DOCKER_CHECK" -eq 0 ]]; then
+  if ! command -v docker >/dev/null 2>&1; then
+    PROBLEMS+=("Docker isn't installed. Install Docker Desktop and re-try.")
+  elif ! docker info >/dev/null 2>&1; then
+    PROBLEMS+=("Docker isn't running. Start Docker Desktop and re-try.")
+  fi
 fi
 
 # ---------- 2. npx (for the Notion MCP server) -------------------------------

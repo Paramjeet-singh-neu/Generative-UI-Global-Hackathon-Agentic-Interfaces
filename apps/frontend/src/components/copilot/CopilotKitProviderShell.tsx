@@ -16,6 +16,9 @@
  */
 
 import { CopilotKitProvider } from "@copilotkit/react-core/v2";
+import { toast } from "sonner";
+
+import { AppToaster } from "./AppToaster";
 
 export function CopilotKitProviderShell({
   children,
@@ -23,12 +26,24 @@ export function CopilotKitProviderShell({
   children: React.ReactNode;
 }) {
   return (
-    <CopilotKitProvider
-      runtimeUrl="/api/copilotkit"
-      publicApiKey={process.env.NEXT_PUBLIC_COPILOT_CLOUD_PUBLIC_API_KEY}
-      openGenerativeUI={{}}
-    >
-      {children}
-    </CopilotKitProvider>
+    <>
+      <CopilotKitProvider
+        runtimeUrl="/api/copilotkit"
+        publicApiKey={process.env.NEXT_PUBLIC_COPILOT_CLOUD_PUBLIC_API_KEY}
+        openGenerativeUI={{}}
+        onError={(evt) => {
+          console.error("[CopilotKit]", evt.code, evt.error);
+          const hint =
+            "Start the BFF on port 4010 and LangGraph on 8133. If Docker Intelligence is down, set COPILOT_RUNTIME_SSE_ONLY=1 in `.env` and restart the BFF. On /coach, use Load demo data for an offline canvas.";
+          toast.error(evt.error?.message ?? "Coach chat hit a runtime error", {
+            description: hint,
+            duration: 14_000,
+          });
+        }}
+      >
+        {children}
+      </CopilotKitProvider>
+      <AppToaster />
+    </>
   );
 }

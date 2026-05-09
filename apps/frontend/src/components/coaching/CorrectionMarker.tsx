@@ -23,14 +23,26 @@ export default function CorrectionMarker({
   );
 
   return (
-    <div className="coach-card-surface coach-card-interactive mt-4 p-4">
+    <div className="coach-card-surface coach-card-interactive mt-4 rounded-2xl p-4">
       <h3 className="font-coach-heading mb-2 text-[var(--text-primary)]">
         Moments on tape
       </h3>
-      <div className="mb-3 flex h-48 w-full items-center justify-center rounded-2xl bg-[var(--bg-primary)]">
-        <span className="font-coach-body text-sm text-[var(--text-secondary)]">
-          🎬 Boxing clip
-        </span>
+      <div
+        className="mb-3 flex h-44 w-full flex-col items-center justify-center gap-2 rounded-2xl"
+        style={{
+          backgroundColor: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+        }}
+      >
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-full"
+          style={{ backgroundColor: "rgba(230, 57, 70, 0.1)" }}
+        >
+          <span className="text-xl">🎬</span>
+        </div>
+        <p className="font-coach-body text-xs text-[var(--text-secondary)]">
+          Video analysis preview
+        </p>
       </div>
       <div className="relative mb-3 h-5 w-full rounded-full bg-[var(--bg-primary)]">
         {timestamps.map((ts, i) => (
@@ -38,11 +50,13 @@ export default function CorrectionMarker({
             key={`${ts.time}-${ts.label}-${i}`}
             type="button"
             onClick={() => onMarkerClick(ts)}
-            className="absolute top-0 h-5 w-3 rounded-full transition-transform hover:scale-125"
+            className={`absolute top-0 h-5 w-3 rounded-full ${ts.severity === "high" ? "coach-marker-high" : "transition-transform hover:scale-125"}`}
             style={{
               left: `${(ts.time / duration) * 100}%`,
               backgroundColor: colors[ts.severity],
-              transform: "translateX(-50%)",
+              ...(ts.severity === "high"
+                ? {}
+                : { transform: "translateX(-50%)" }),
               boxShadow:
                 ts.severity === "high"
                   ? "0 0 16px rgba(230, 57, 70, 0.2)"

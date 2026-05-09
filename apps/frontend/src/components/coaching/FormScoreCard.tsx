@@ -24,7 +24,7 @@ export default function FormScoreCard({
 
   return (
     <div
-      className={`coach-card-surface coach-card-interactive relative mb-3 overflow-hidden p-4 text-left transition-[box-shadow,border-color] duration-300 ${
+      className={`coach-card-surface coach-card-interactive relative mb-3 overflow-hidden rounded-2xl p-4 text-left transition-[box-shadow,border-color] duration-300 ${
         highlighted
           ? "coach-worst-technique-pulse border-2 border-[var(--accent-red)]"
           : ""
@@ -56,9 +56,26 @@ export default function FormScoreCard({
           </div>
         </div>
       </div>
-      <p className="relative font-coach-body text-sm leading-snug text-[var(--text-secondary)]">
-        {correction}
-      </p>
+      <div className="relative mt-2 flex items-start gap-2">
+        <span className="mt-0.5 text-xs" style={{ color: "var(--accent-amber)" }}>
+          ↳
+        </span>
+        <p className="font-coach-body text-xs leading-relaxed text-[var(--text-secondary)]">
+          {correction}
+        </p>
+      </div>
+      <div
+        className="absolute bottom-0 left-0 h-0.5 rounded-full transition-all duration-1000"
+        style={{
+          width: `${safe}%`,
+          background:
+            safe > 70
+              ? "linear-gradient(90deg, var(--accent-green), transparent)"
+              : safe > 40
+                ? "linear-gradient(90deg, var(--accent-amber), transparent)"
+                : "linear-gradient(90deg, var(--accent-red), transparent)",
+        }}
+      />
     </div>
   );
 }

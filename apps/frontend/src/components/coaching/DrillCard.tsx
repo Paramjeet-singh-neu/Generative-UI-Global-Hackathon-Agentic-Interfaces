@@ -58,7 +58,7 @@ export default function DrillCard({
 
   return (
     <div
-      className={`coach-card-surface coach-card-interactive mb-3 p-4 text-left transition-all duration-300 ease-out ${
+      className={`coach-card-surface coach-card-interactive mb-3 rounded-2xl p-4 text-left transition-all duration-300 ease-out ${
         actionState === "approved"
           ? "border-l-[3px] border-l-[var(--accent-green)] opacity-80"
           : ""
@@ -75,17 +75,27 @@ export default function DrillCard({
             : undefined,
       }}
     >
-      <h3
-        className={`font-coach-heading text-base text-[var(--text-primary)] ${
-          actionState === "skipped" ? "line-through" : ""
-        }`}
-      >
-        {name}
-      </h3>
-      <p className="font-coach-body mt-1 text-sm text-[var(--text-secondary)]">
-        <span className="font-medium text-[var(--text-primary)]">{reps}</span>{" "}
-        reps · <span>{focus}</span>
-      </p>
+      <div className="flex items-center gap-3">
+        <span
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold"
+          style={{
+            backgroundColor: "rgba(230, 57, 70, 0.1)",
+            color: "var(--accent-red)",
+          }}
+        >
+          {reps}
+        </span>
+        <div className="min-w-0">
+          <h3
+            className={`font-coach-heading text-sm font-semibold text-[var(--text-primary)] ${
+              actionState === "skipped" ? "line-through" : ""
+            }`}
+          >
+            {name}
+          </h3>
+          <p className="font-coach-body text-xs text-[var(--text-secondary)]">{focus}</p>
+        </div>
+      </div>
       {reasonText ? (
         <p className="font-coach-body mt-2 text-xs italic text-[var(--accent-amber)]">
           💡 {reasonText}
@@ -105,7 +115,8 @@ export default function DrillCard({
             type="button"
             disabled={disabled}
             onClick={handleApprove}
-            className="font-coach-body flex-1 rounded-lg bg-[var(--accent-red)] px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="font-coach-body flex-1 rounded-xl py-2.5 text-sm font-semibold transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ backgroundColor: "var(--accent-green)", color: "#fff" }}
           >
             Approve
           </button>
@@ -113,7 +124,12 @@ export default function DrillCard({
             type="button"
             disabled={disabled}
             onClick={handleSkip}
-            className="font-coach-body flex-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-3 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-card-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="font-coach-body flex-1 rounded-xl border py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              borderColor: "var(--border-subtle)",
+              color: "var(--text-secondary)",
+              backgroundColor: "transparent",
+            }}
           >
             Skip
           </button>

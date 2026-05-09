@@ -12,18 +12,15 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type CSSProperties,
 } from "react";
-import Link from "next/link";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import { z } from "zod";
 import {
   CopilotChatConfigurationProvider,
   CopilotSidebar,
-  useAgent,
   useConfigureSuggestions,
   useDefaultRenderTool,
   useFrontendTool,
@@ -31,13 +28,11 @@ import {
 
 import CoachingCanvas from "@/components/coaching/CoachingCanvas";
 import CoachGenDrillCard from "@/components/coaching/CoachGenDrillCard";
+import { CoachRuntimeProvider, useCoachRuntime } from "@/components/coaching/CoachRuntimeContext";
 import ScoreRing from "@/components/coaching/ScoreRing";
 import { ToolFallbackCard } from "@/components/copilot/ToolFallbackCard";
-import { ThreadsDrawer } from "@/components/threads-drawer";
 import drawerStyles from "@/components/threads-drawer/threads-drawer.module.css";
 import type { CoachingData } from "@/lib/coaching/types";
-import type { AgentState } from "@/lib/leads/types";
-import { mergeAgentState } from "@/lib/leads/state";
 
 function ClientOnly({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -47,25 +42,6 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 function CoachCanvasInner() {
-  const { agent } = useAgent();
-  const mockBootRef = useRef(false);
-  const savedTabTitleRef = useRef<string | null>(null);
-  const loadMockRef = useRef<(() => void) | null>(null);
-
-  const coachState = useMemo(
-    () => mergeAgentState(agent?.state),
-    [agent?.state],
-  );
-
-  const pushAgentState = useCallback(
-    (patch: Partial<AgentState>) => {
-      if (!agent) return;
-      const next = { ...mergeAgentState(agent.state), ...patch };
-      agent.setState(next);
-    },
-    [agent],
-  );
-
   useFrontendTool({
     name: "highlightTechnique",
     description:
@@ -181,26 +157,66 @@ function CoachCanvasInner() {
     },
   });
 
+  useConfigureSuggestions({
+    available: "before-first-message",
+    suggestions: [
+      {
+        title: "Analyze my footage",
+        message:
+          "Analyze my jab drill and tell me what to fix first.",
+      },
+      {
+        title: "Similar technique search",
+        message:
+          "Search my index for reference footage similar to a crisp leading jab.",
+      },
+    ],
+  });
+
+  useDefaultRenderTool({
+    render: ({ name, status, result, parameters }) => (
+      <ToolFallbackCard
+        name={name}
+        status={status}
+        result={result}
+        parameters={parameters}
+      />
+    ),
+  });
+
+  return (
+    <CoachRuntimeProvider>
+      <CoachRouteChrome />
+    </CoachRuntimeProvider>
+  );
+}
+
+function CoachRouteChrome() {
+  const { state: coachState, applyPatch, agentConnected } = useCoachRuntime();
+  const mockBootRef = useRef(false);
+  const savedTabTitleRef = useRef<string | null>(null);
+  const loadMockRef = useRef<(() => void) | null>(null);
+
   const loadMock = useCallback(async () => {
     try {
       const res = await fetch("/api/mock-coaching-data");
       if (!res.ok) {
-        toast.error("Could not load mock_coaching_data.json");
+        toast.error("Could not load demo coaching data");
         return;
       }
       const data = (await res.json()) as CoachingData;
-      pushAgentState({
+      applyPatch({
         coaching_data: data,
         coaching_status: "complete",
         approved_drills: [],
         skipped_drills: [],
         clips_analyzed: 1,
       });
-      toast.success("Loaded mock coaching JSON into agent state");
+      toast.success("Loaded demo coaching data");
     } catch {
-      toast.error("Failed to fetch mock JSON");
+      toast.error("Failed to load demo data");
     }
-  }, [pushAgentState]);
+  }, [applyPatch]);
 
   loadMockRef.current = loadMock;
 
@@ -245,60 +261,35 @@ function CoachCanvasInner() {
   }, []);
 
   useEffect(() => {
-    if (
-      process.env.NEXT_PUBLIC_COACHING_MOCK !== "1" ||
-      !agent ||
-      mockBootRef.current
-    ) {
+    if (process.env.NEXT_PUBLIC_COACHING_MOCK !== "1" || mockBootRef.current) {
       return;
     }
     mockBootRef.current = true;
     let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch("/api/mock-coaching-data");
-        if (!res.ok || cancelled) return;
-        const data = (await res.json()) as CoachingData;
-        if (cancelled) return;
-        pushAgentState({
-          coaching_data: data,
-          coaching_status: "complete",
-        });
-      } catch {
-        /* optional mock */
-      }
-    })();
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch("/api/mock-coaching-data");
+          if (!res.ok || cancelled) return;
+          const data = (await res.json()) as CoachingData;
+          if (cancelled) return;
+          applyPatch({
+            coaching_data: data,
+            coaching_status: "complete",
+            approved_drills: [],
+            skipped_drills: [],
+            clips_analyzed: 1,
+          });
+        } catch {
+          /* ignore */
+        }
+      })();
+    }, 500);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [agent, pushAgentState]);
-
-  useConfigureSuggestions({
-    available: "before-first-message",
-    suggestions: [
-      {
-        title: "Analyze a clip",
-        message:
-          "Analyze my boxing clip with analyze_boxing_clip. My TwelveLabs video_id is YOUR_VIDEO_ID.",
-      },
-      {
-        title: "Similar technique search",
-        message:
-          'Search my index for footage similar to a crisp leading jab with search_similar_techniques.',
-      },
-    ],
-  });
-
-  useDefaultRenderTool({
-    render: ({ name, status, result, parameters }) => (
-      <ToolFallbackCard
-        name={name}
-        status={status}
-        result={result}
-        parameters={parameters}
-      />
-    ),
-  });
+  }, [applyPatch]);
 
   return (
     <>
@@ -321,26 +312,33 @@ function CoachCanvasInner() {
       <div className="coach-app font-coach-body min-h-0 flex-1 overflow-y-auto">
         <header className="sticky top-0 z-10 border-b border-[var(--border-subtle)] bg-[var(--bg-card)]/95 px-6 py-4 backdrop-blur">
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
-            <Link
-              href="/"
-              className="font-coach-body text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent-amber)]"
-            >
-              ← Home
-            </Link>
+            <span className="font-coach-heading text-sm font-semibold tracking-tight text-[var(--text-primary)]">
+              CoachMe+
+            </span>
             <div className="flex flex-wrap items-center gap-2">
+              {!agentConnected ? (
+                <span
+                  className="font-coach-body max-w-[min(100%,240px)] rounded-full px-3 py-1 text-[11px] font-medium leading-snug"
+                  style={{
+                    backgroundColor: "rgba(244, 162, 97, 0.14)",
+                    color: "var(--accent-amber)",
+                  }}
+                >
+                  Coach offline — Load demo data works without the backend
+                </span>
+              ) : null}
               <button
                 type="button"
                 onClick={loadMock}
-                className="font-coach-body rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-card-hover)]"
+                className="font-coach-body rounded-full border px-3 py-1 text-xs transition-colors"
+                style={{
+                  borderColor: "var(--border-subtle)",
+                  color: "var(--text-secondary)",
+                  backgroundColor: "transparent",
+                }}
               >
-                Load mock JSON
+                Load demo data
               </button>
-              <span className="font-coach-body text-xs text-[var(--text-secondary)]">
-                Live: shared LangGraph state via{" "}
-                <code className="rounded bg-[var(--bg-primary)] px-1">
-                  useAgent
-                </code>
-              </span>
             </div>
           </div>
         </header>
@@ -359,14 +357,11 @@ function CoachCanvasInner() {
         input={{ disclaimer: () => null, className: "pb-6" }}
       />
 
-      <Toaster richColors position="top-center" />
     </>
   );
 }
 
 function CoachHomePage() {
-  const [threadId, setThreadId] = useState<string | undefined>(undefined);
-
   useEffect(() => {
     document.documentElement.classList.add("coach-copilot-route");
     return () => {
@@ -376,7 +371,7 @@ function CoachHomePage() {
 
   return (
     <div
-      className={drawerStyles.layout}
+      className={`${drawerStyles.layout} coach-demo-layout`}
       style={
         {
           background: "var(--bg-primary)",
@@ -389,18 +384,12 @@ function CoachHomePage() {
         } as CSSProperties
       }
     >
-      <ThreadsDrawer
-        agentId="default"
-        threadId={threadId}
-        onThreadChange={setThreadId}
-      />
       <div
         className={`${drawerStyles.mainPanel} flex min-h-0 flex-col`}
         style={{ background: "var(--bg-primary)" }}
       >
         <CopilotChatConfigurationProvider
           agentId="default"
-          threadId={threadId}
           labels={{
             modalHeaderTitle: "CoachMe+ 🥊",
             welcomeMessageText:

@@ -96,18 +96,27 @@ if _AGENT_RUNTIME.startswith("gemini-") and _gemini_placeholder:
 
 
 if _coachme_skip_notion():
-    from src.agent import load_coaching_tools
+    from src.agent import coachme_use_mcp, load_coaching_tools
 
     backend_tools = load_coaching_tools()
 
     tl_key = os.getenv("TWELVELABS_API_KEY", "").strip()
     tl_idx = os.getenv("TWELVELABS_INDEX_ID", "").strip()
-    _integration_snapshot = (
-        f"coachme=twelve_labs pegasus_analyze=ON marengo_search=ON "
-        f"twelvelabs_api_key={'set' if tl_key else 'MISSING'} "
-        f"twelvelabs_index_id={'set' if tl_idx else 'MISSING'} "
-        f"| Notion MCP tools omitted (COACHME_SKIP_NOTION=1)."
-    )
+    if coachme_use_mcp():
+        _integration_snapshot = (
+            "coachme=boxing_mcp analyze=MCP drill_library=MCP "
+            f"(COACHME_USE_MCP=1). TwelveLabs optional: api_key="
+            f"{'set' if tl_key else 'off'}, index_id="
+            f"{'set' if tl_idx else 'off'} "
+            "| Notion MCP tools omitted (COACHME_SKIP_NOTION=1)."
+        )
+    else:
+        _integration_snapshot = (
+            f"coachme=twelve_labs pegasus_analyze=ON marengo_search=ON "
+            f"twelvelabs_api_key={'set' if tl_key else 'MISSING'} "
+            f"twelvelabs_index_id={'set' if tl_idx else 'MISSING'} "
+            f"| Notion MCP tools omitted (COACHME_SKIP_NOTION=1)."
+        )
     print(f"[coachme] {_integration_snapshot}", flush=True)
     SYSTEM_PROMPT = build_coachme_system_prompt(_integration_snapshot)
 

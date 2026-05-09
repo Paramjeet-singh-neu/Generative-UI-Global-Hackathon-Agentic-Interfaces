@@ -8,8 +8,8 @@ export default function HomePage() {
           CopilotKit hackathon starter
         </h1>
         <p className="mt-2 max-w-md text-muted-foreground">
-          Pick a demo route. CoachMe+ uses mock JSON from the repo root until
-          the agent is wired.
+          Pick a demo route. CoachMe+ can load demo coaching data from the repo
+          until the agent is connected.
         </p>
       </div>
       <nav className="flex flex-col gap-3 sm:flex-row">
@@ -17,7 +17,7 @@ export default function HomePage() {
           href="/coach"
           className="rounded-xl border border-border bg-card px-6 py-3 text-center text-sm font-semibold text-card-foreground shadow-sm transition-colors hover:bg-muted/50"
         >
-          CoachMe+ (mock canvas)
+          CoachMe+ (demo canvas)
         </Link>
         <Link
           href="/leads"

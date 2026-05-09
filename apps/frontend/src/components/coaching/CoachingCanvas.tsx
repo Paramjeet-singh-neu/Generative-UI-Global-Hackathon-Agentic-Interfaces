@@ -12,7 +12,6 @@ import { useAgent, useCopilotKit } from "@copilotkit/react-core/v2";
 
 import type { CoachingSessionStatus, TimestampMarker } from "@/lib/coaching/types";
 import type { AgentState } from "@/lib/leads/types";
-import { mergeAgentState } from "@/lib/leads/state";
 
 import Confetti from "./Confetti";
 import CorrectionMarker from "./CorrectionMarker";
@@ -21,6 +20,7 @@ import FormScoreCard from "./FormScoreCard";
 import ScoreRing from "./ScoreRing";
 import SessionBar from "./SessionBar";
 import SessionSummary from "./SessionSummary";
+import { useCoachRuntime } from "./CoachRuntimeContext";
 
 const LOADING_LINES = [
   "Studying your stance...",
@@ -54,7 +54,7 @@ function StaggerSection({
   const show = visibleCount > index;
   return (
     <div
-      className="coach-stagger-item"
+      className="coach-stagger-item stagger-item"
       style={{
         opacity: show ? 1 : 0,
         transform: show ? "translateY(0)" : "translateY(16px)",
@@ -101,8 +101,8 @@ function AnalyzingView() {
 export default function CoachingCanvas() {
   const { agent } = useAgent();
   const { copilotkit } = useCopilotKit();
+  const { state, applyUpdater } = useCoachRuntime();
 
-  const state = useMemo(() => mergeAgentState(agent?.state), [agent?.state]);
   const coachingData = state.coaching_data;
   const status = canvasStatusFromAgent(state);
 
@@ -110,15 +110,19 @@ export default function CoachingCanvas() {
 
   const updateState = useCallback(
     (updater: (prev: AgentState) => AgentState) => {
-      if (!agent) return;
-      agent.setState(updater(mergeAgentState(agent.state)));
+      applyUpdater(updater);
     },
-    [agent],
+    [applyUpdater],
   );
 
   const injectPrompt = useCallback(
     (prompt: string) => {
-      if (!agent) return;
+      if (!agent) {
+        toast.message(
+          "Coach backend isn’t connected — use Load demo data (⌘M) or run the full stack from the repo root.",
+        );
+        return;
+      }
       const id =
         typeof crypto !== "undefined" && "randomUUID" in crypto
           ? crypto.randomUUID()
@@ -219,8 +223,8 @@ export default function CoachingCanvas() {
         </p>
         <p className="font-coach-body mt-2 text-sm text-[var(--text-secondary)]">
           Let&apos;s try that again — drop another clip, check the chat for
-          details (TwelveLabs key, index, or video_id), or use{" "}
-          <span className="text-[var(--text-primary)]">Load mock JSON</span>.
+          details (TwelveLabs key and video_id if using Pegasus), or use{" "}
+          <span className="text-[var(--text-primary)]">Load demo data</span>.
         </p>
         <button
           type="button"
@@ -266,18 +270,10 @@ export default function CoachingCanvas() {
           ))}
         </div>
         <p className="font-coach-body mt-10 max-w-lg text-sm text-[var(--text-secondary)]">
-          Or use{" "}
-          <span className="text-[var(--text-primary)]">Load mock JSON</span> for
-          an offline preview, or ask the coach to run{" "}
-          <span className="font-mono text-[var(--text-primary)]">
-            analyze_boxing_clip
-          </span>{" "}
-          with your TwelveLabs{" "}
-          <span className="font-mono text-[var(--text-primary)]">video_id</span>
-          .
-        </p>
-        <p className="font-coach-body mt-6 text-[10px] opacity-50 text-[var(--text-secondary)]">
-          ⌘K / Ctrl+K to open coach · ⌘M / Ctrl+M to load mock JSON
+          Use{" "}
+          <span className="text-[var(--text-primary)]">Load demo data</span>{" "}
+          (or ⌘M / Ctrl+M) for a full offline run-through. With the coach backend
+          running, ask to analyze your drill — coaching data comes from MCP by default.
         </p>
       </div>
     );

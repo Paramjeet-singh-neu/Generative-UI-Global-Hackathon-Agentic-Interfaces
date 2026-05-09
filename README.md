@@ -1,34 +1,50 @@
-# Generative UI Global Hackathon: Agentic Interfaces Starter Kit
+# CoachMe+
+
+**Agentic boxing coaching** for the **Generative UI Global Hackathon: Agentic Interfaces**. CoachMe+ uses **TwelveLabs** (Pegasus video analysis + Marengo similarity search) and **Gemini** behind a **LangGraph** deep agent. Analysis results land in shared agent state (`coaching_data`, `coaching_status`, `coaching_score_history`, …) so the **CopilotKit** canvas updates from the same snapshot the model sees — not from ad-hoc chat parsing. **Generative UI** appears in both places: a rich **`/coach`** surface (score rings, drills, correction timeline, automatic progress after two clips) and chat tools (`highlightTechnique`, `generateDrill`, `showComparison`).
 
 ![Hackathon Banner](apps/frontend/public/banner.jpg)
 
-Welcome to the **Generative UI Global Hackathon: Agentic Interfaces**! This starter kit gives you a complete AI-powered application with durable conversation threads, an agent-driven canvas, real-world MCP integrations, and a deployable MCP App — wired up with CopilotKit, LangChain Deep Agents, Gemini, A2UI, Notion MCP (via mcp-use), Manufact, and Daytona.
+## Highlights
 
-### CoachMe+ (boxing — team track)
+- **AG-UI / shared state** — Backend tool `analyze_boxing_clip` returns `Command(update=…)`; the UI reads `useAgent().state` via `mergeAgentState`. Intermediate **`coaching_status: analyzing`** is emitted while Pegasus runs.
+- **TwelveLabs** — Official SDK in `apps/agent/src/twelvelabs_client.py`; schema-guided JSON; **`search_similar_techniques`** for reference clips. **`COACHME_USE_CACHE=1`** loads `apps/agent/src/coaching_cache.json` for booth-friendly demos without calling the API.
+- **Coach mode switch** — **`COACHME_SKIP_NOTION=1`** in `apps/agent/.env` swaps Notion CRM tools for boxing tools (`apps/agent/main.py`, `apps/agent/src/agent.py`).
+- **Tests** — `npm test` runs **`pytest`** (score-history + Pegasus JSON parsing) and **`vitest`** (`mergeAgentState` / coaching fields).
 
-**CoachMe+** turns TwelveLabs video analysis into a **runtime-generated coaching workspace** (scores, drills, correction timeline, comparisons) — not a chat transcript. Open **`/coach`** after `npm run dev`. Agent mode: set **`COACHME_SKIP_NOTION=1`** in `apps/agent/.env`. Optional fast demo: **`COACHME_USE_CACHE=1`** loads `apps/agent/src/coaching_cache.json`.
+## Quick start (CoachMe+)
 
-## About this starter
+1. **Env:** `cp .env.example .env` and `cp .env.example apps/agent/.env`.
+2. Set **`GEMINI_API_KEY`** in **both** files. In **`apps/agent/.env`** add **`COACHME_SKIP_NOTION=1`**, **`TWELVELABS_API_KEY`**, and **`TWELVELABS_INDEX_ID`** (needed for Marengo search). Optional: **`COACHME_USE_CACHE=1`** for cached Pegasus output.
+3. **`npm install`** then **`npm run dev`** (Docker + Intelligence + UI + agent — see [Run it locally](#run-it-locally) for details).
+4. Open **`http://localhost:3010/coach`**. Use **Load mock JSON** for an offline UI pass, or ask the coach to run **`analyze_boxing_clip`** with a real TwelveLabs **`video_id`**.
+
+Shortcuts on **`/coach`**: **⌘/Ctrl+K** focuses chat · **⌘/Ctrl+M** loads mock JSON.
+
+## Routes
+
+| Path | What you get |
+|------|----------------|
+| **`/`** | Hub: CoachMe+ vs. leads CRM |
+| **`/coach`** | CoachMe+ canvas + CopilotKit sidebar |
+| **`/leads`** | Workshop **Notion** lead triage (original starter canvas) |
+
+## Starter kit walkthrough (video)
+
+The repo still includes the full hackathon **starter** (threads, Notion MCP, MCP App, A2UI). These clips show the base kit:
 
 https://github.com/user-attachments/assets/f2a405c3-3cf4-44c8-bca3-2c8b8e6fed90
 
-This is a starter template for building agentic interfaces using Generative UI. It provides a modern Next.js application with an integrated [LangGraph Deep Agent](https://docs.langchain.com/oss/python/deepagents/overview) that manages a visual canvas of interactive cards with real-time AI synchronization and external tool integrations (a Notion "Leads" database, for this example) through MCP. A second deployable MCP server, built on mcp-use, gives the agent a third surface that runs natively in Claude or ChatGPT.
-
-This is an example application that we built to help you get started quickly. Everything you see can be customized, replaced, augmented, or built upon.
-
 https://github.com/user-attachments/assets/6f44cf84-e485-4c26-8703-481e0c9c2c54
 
-- **Persistent threads.** Every conversation is named, listed in the sidebar, and survives reloads, restarts, and resumes mid-run.
-- **Agent-driven canvas.** Lead cards, follow-up notes, and pipeline charts the AI can create, edit, and organize while you watch.
-- **Real integrations via MCP.** Notion Leads database sync out of the box; swap to any other MCP server with one config edit.
-- **Deployable MCP server.** A third agent surface that runs in Claude or ChatGPT, deployable with one command.
-- **Generative UI primed.** Stream Gemini-rendered components without re-plumbing.
+**Also bundled:** durable **threads**, **Notion** leads import, deployable **`apps/mcp`**, and guides under [`dev-docs/`](dev-docs/).
 
 ---
 
 ## Generative UI
 
 ![Generative UI spectrum: Controlled → Declarative → Open-ended](apps/frontend/public/generative-ui-spectrum-v2.jpg)
+
+CoachMe+ leans on **controlled** components (`FormScoreCard`, `DrillCard`, `ScoreRing`, …) driven by agent state, plus **frontend tools** for chat-rendered blocks. The spectrum below is the same model the starter uses for leads + A2UI + MCP Apps.
 
 "Generative UI" describes any AI-driven interface that the agent **chooses, composes, or writes at runtime**. Approaches sit on a spectrum — from **more control** on one end to **more flexibility** on the other — and most real apps mix several tiers.
 
@@ -44,7 +60,7 @@ Utilizing the [A2UI](https://a2ui.org/) specification, this method uses a schema
 
 The "Wild West" of generative UI — the agent generates raw HTML that is rendered within a secure, sandboxed double-iframe. While it is the most flexible — enabling the creation of disposable, data-grounded interfaces on the fly — it is the hardest to style consistently and can behave unpredictably. See [opengenerativeui.copilotkit.ai](https://opengenerativeui.copilotkit.ai/) for a live demo, and the CopilotKit docs on [MCP Apps](https://docs.copilotkit.ai/generative-ui/mcp-apps) and [Open Generative UI](https://docs.copilotkit.ai/generative-ui/open-generative-ui).
 
-This kit is wired for all three: the canvas surface uses controlled cards for lead entities, A2UI streams declarative components from Gemini, and the deployable MCP server in `apps/mcp/` extends the same agent into Claude and ChatGPT's open-ended generative UI surface.
+This kit is wired for all three: the **leads** canvas uses controlled cards for entities; **CoachMe+** uses controlled coaching widgets on `/coach`; A2UI streams declarative components from Gemini; and the deployable MCP server in `apps/mcp/` extends the same agent into Claude and ChatGPT's open-ended generative UI surface.
 
 **Go deeper:**
 
@@ -63,7 +79,7 @@ CopilotKit connects your app's logic, state, and user context to the AI agents t
 
 ### LangChain Deep Agents
 
-LangChain Deep Agents is a Python framework that gives an LLM agent built-in planning, sub-agent dispatch, a virtual filesystem, and a TODO loop — the patterns popularized by Claude Code and Manus, packaged as a `create_deep_agent(...)` call on top of LangGraph. The kit uses Deep Agents as the brain behind the canvas: a single prompt like "import the workshop leads and draft outreach to the top 5" triggers a multi-step plan that the agent executes tool-by-tool while you watch the cards appear.
+LangChain Deep Agents is a Python framework that gives an LLM agent built-in planning, sub-agent dispatch, a virtual filesystem, and a TODO loop — the patterns popularized by Claude Code and Manus, packaged as a `create_deep_agent(...)` call on top of LangGraph. The kit uses Deep Agents as the brain behind the canvas: e.g. "import the workshop leads and draft outreach to the top 5" for **`/leads`**, or "analyze this clip" + **`analyze_boxing_clip`** for **`/coach`** — the agent drives tools while the UI updates from shared state.
 
 [More about Deep Agents ->](https://github.com/langchain-ai/deepagents)
 
@@ -72,6 +88,10 @@ LangChain Deep Agents is a Python framework that gives an LLM agent built-in pla
 Gemini 3.1 Flash-Lite is Google's high-volume workhorse in the Gemini 3 family — fast, cheap, and tool-calling-capable. The kit defaults to **`gemini-3.1-flash-lite`** for chat — pick up an API key from [Google AI Studio](https://aistudio.google.com), drop it into `.env`, and you're done. Need a more reasoning-heavy model? Swap to **Gemini 3 Pro Preview** or **Gemini 3 Flash** with a one-line edit in `apps/agent/src/runtime.py` (`_gemini_llm`). Swapping to OpenAI, Anthropic, or any other LangChain-supported model is also a one-line edit (see [Switching to a different model](dev-docs/model-switching.md)).
 
 [More about Gemini ->](https://ai.google.dev/gemini-api/docs)
+
+### TwelveLabs (CoachMe+)
+
+[TwelveLabs](https://twelvelabs.io/) powers **CoachMe+** when **`COACHME_SKIP_NOTION=1`**: **Pegasus** produces structured coaching JSON (techniques, drills, timestamps, overall score); **Marengo** backs **`search_similar_techniques`**. Keys and index id live in **`apps/agent/.env`** (`TWELVELABS_API_KEY`, `TWELVELABS_INDEX_ID`). Sanity-check indexes with **`npm run verify:twelvelabs`** from the repo root.
 
 ### A2UI
 
@@ -102,8 +122,12 @@ The kit's `apps/mcp/` package is an MCP server built with [`mcp-use`](https://ma
 ## Run it locally
 
 1. Run `npx @copilotkit/cli@latest init` and select **Intelligence** when prompted.
-2. Drop a Gemini API key into **both** `.env` and `apps/agent/.env`. Then follow [Notion setup](#notion-setup) below for the integration token + database id.
-3. Run `npm install` then `npm run dev` (or `npm run dev:full` to include the MCP server).
+2. Drop a **Gemini** API key into **both** `.env` and `apps/agent/.env`.
+3. **CoachMe+ only:** in **`apps/agent/.env`**, set **`COACHME_SKIP_NOTION=1`** and your **TwelveLabs** variables (see [`.env.example`](.env.example) and [`apps/agent/.env.example`](apps/agent/.env.example)). You can skip [Notion setup](#notion-setup); **`scripts/check-env.sh`** skips Notion checks when that flag is set. For UI-only iteration without TwelveLabs, use **Load mock JSON** on **`/coach`** or **`COACHME_USE_CACHE=1`**.
+4. **Leads CRM demo:** follow [Notion setup](#notion-setup) for the integration token + database id.
+5. Run **`npm install`** then **`npm run dev`** (or **`npm run dev:full`** to include the MCP server).
+
+**Tests:** **`npm test`** — `pytest` in `apps/agent` + `vitest` in `apps/frontend`.
 
 > `npm run dev` runs a pre-flight check (`scripts/check-env.sh`) before booting anything — it'll fail loudly with a numbered list of any missing keys, an unreachable Notion database, or a Docker daemon that isn't running. Fix what it lists, re-run, and you're off. See [dev-docs/troubleshooting.md](dev-docs/troubleshooting.md) for fixes per failure mode.
 
@@ -203,10 +227,12 @@ Deeper guides live in [`dev-docs/`](dev-docs/):
 - [Architecture](dev-docs/architecture.md) · [Customization](dev-docs/customization.md) · [Threads / Intelligence](dev-docs/threads.md)
 - [Scripts](dev-docs/scripts.md) · [Demo prompts](dev-docs/demo-prompts.md) · [Troubleshooting](dev-docs/troubleshooting.md)
 
+**CoachMe+ code paths:** agent tools and prompts — `apps/agent/src/agent.py`, `apps/agent/src/twelvelabs_client.py`, `apps/agent/src/prompts.py` (`COACHME_PROMPT`); UI — `apps/frontend/src/app/coach/page.tsx`, `apps/frontend/src/components/coaching/`; shared coaching types — `apps/frontend/src/lib/coaching/types.ts`; agent state merge — `apps/frontend/src/lib/leads/state.ts`.
+
 ## License
 
 MIT.
 
 ---
 
-> Built for the Generative UI Global Hackathon: Agentic Interfaces.
+> **CoachMe+** — Generative UI Global Hackathon: Agentic Interfaces (extends the official starter kit).

@@ -1,6 +1,17 @@
 import type { CoachingAgentStatus } from "../coaching/types";
 import type { AgentState, LeadFilter } from "./types";
 
+function normalizeCoachingScoreHistory(raw: unknown): number[] {
+  if (!Array.isArray(raw)) return [];
+  const out: number[] = [];
+  for (const x of raw) {
+    const n = typeof x === "number" ? x : Number(x);
+    if (!Number.isFinite(n)) continue;
+    out.push(n);
+  }
+  return out.slice(-2);
+}
+
 function normalizeCoachingStatus(raw: unknown): CoachingAgentStatus {
   if (
     raw === "idle" ||
@@ -36,6 +47,7 @@ export const initialState: AgentState = {
   approved_drills: [],
   skipped_drills: [],
   clips_analyzed: 0,
+  coaching_score_history: [],
 };
 
 /** Normalize LangGraph / CopilotKit agent snapshots into `AgentState`. */
@@ -62,6 +74,9 @@ export function mergeAgentState(raw: unknown): AgentState {
     skipped_drills: partial.skipped_drills ?? initialState.skipped_drills,
     clips_analyzed:
       partial.clips_analyzed ?? initialState.clips_analyzed,
+    coaching_score_history: normalizeCoachingScoreHistory(
+      partial.coaching_score_history ?? initialState.coaching_score_history,
+    ),
   };
 }
 

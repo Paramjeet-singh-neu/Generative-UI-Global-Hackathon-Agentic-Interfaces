@@ -8,8 +8,23 @@ export default function HomePage() {
           CopilotKit hackathon starter
         </h1>
         <p className="mt-2 max-w-md text-muted-foreground">
-          Pick a demo route. CoachMe+ uses mock JSON from the repo root until
-          the agent is wired.
+          <span className="font-medium text-foreground">CoachMe+</span> is a
+          full stack demo: LangGraph tools write{" "}
+          <code className="rounded bg-muted px-1 text-xs">coaching_data</code> /
+          <code className="rounded bg-muted px-1 text-xs">coaching_status</code>{" "}
+          to the agent snapshot (TwelveLabs Pegasus + Marengo), CopilotKit
+          streams the canvas, and generative UI tools render in the sidebar.
+          Set{" "}
+          <code className="rounded bg-muted px-1 text-xs">
+            COACHME_SKIP_NOTION=1
+          </code>{" "}
+          plus{" "}
+          <code className="rounded bg-muted px-1 text-xs">TWELVELABS_*</code> /{" "}
+          <code className="rounded bg-muted px-1 text-xs">GEMINI_API_KEY</code>{" "}
+          in <code className="rounded bg-muted px-1 text-xs">apps/agent/.env</code>
+          . Use <strong>Load mock JSON</strong> on{" "}
+          <span className="font-medium text-foreground">/coach</span> for an
+          offline walkthrough.
         </p>
       </div>
       <nav className="flex flex-col gap-3 sm:flex-row">
@@ -17,7 +32,7 @@ export default function HomePage() {
           href="/coach"
           className="rounded-xl border border-border bg-card px-6 py-3 text-center text-sm font-semibold text-card-foreground shadow-sm transition-colors hover:bg-muted/50"
         >
-          CoachMe+ (mock canvas)
+          CoachMe+ (TwelveLabs + AG-UI canvas)
         </Link>
         <Link
           href="/leads"

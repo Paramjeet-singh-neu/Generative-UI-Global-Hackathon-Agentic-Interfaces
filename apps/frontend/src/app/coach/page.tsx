@@ -226,6 +226,7 @@ function CoachCanvasInner() {
         approved_drills: [],
         skipped_drills: [],
         clips_analyzed: 1,
+        coaching_score_history: [data.overall_score],
       });
       toast.success("Loaded mock coaching JSON into agent state");
     } catch {
@@ -294,6 +295,10 @@ function CoachCanvasInner() {
         pushAgentState({
           coaching_data: data,
           coaching_status: "complete",
+          approved_drills: [],
+          skipped_drills: [],
+          clips_analyzed: 1,
+          coaching_score_history: [data.overall_score],
         });
       } catch {
         /* optional mock */

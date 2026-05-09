@@ -4,8 +4,8 @@ Wires:
 - A switchable runtime (Gemini Flash-Lite + deepagents | Gemini Flash-Lite + react |
   Claude Sonnet 4.6 + react) selected by `AGENT_RUNTIME`. See
   `src/runtime.py` and the README's "Switching to a different model".
-- Notion-MCP-backed backend tools (always present; Notion read goes through
-  the official `@notionhq/notion-mcp-server` via mcp-use)
+- Backend tools: Notion MCP pack **or** CoachMe+ TwelveLabs tools when
+  `COACHME_SKIP_NOTION=1` (see `src/agent.py`)
 - TimingMiddleware (per-turn wall-time logging — see `src/timing.py`)
 - LeadStateMiddleware + CopilotKitMiddleware for canvas state + AG-UI
 
@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 from src.intelligence_cleanup import wipe_orphan_threads
 from src.lead_store import boot_status as _lead_store_boot_status
 from src.notion_tools import load_notion_tools
-from src.prompts import build_system_prompt
+from src.prompts import build_coachme_system_prompt, build_system_prompt
 from src.runtime import build_graph
 
 
@@ -43,6 +43,14 @@ load_dotenv()
 # found" and surfaces in the UI as an opaque rxjs stack trace.
 # See `src/intelligence_cleanup.py` for the full rationale.
 wipe_orphan_threads()
+
+
+def _coachme_skip_notion() -> bool:
+    return (os.getenv("COACHME_SKIP_NOTION") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
 
 
 def _format_integration_status() -> str:
@@ -71,9 +79,13 @@ _AGENT_RUNTIME = os.getenv("AGENT_RUNTIME", "gemini-flash-deep")
 print(f"[runtime] AGENT_RUNTIME={_AGENT_RUNTIME}", flush=True)
 
 _gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
-if _AGENT_RUNTIME.startswith("gemini-") and (
-    not _gemini_key or _gemini_key.startswith("stub")
-):
+_gemini_placeholder = (
+    not _gemini_key
+    or _gemini_key.startswith("stub")
+    or _gemini_key.startswith("your_")
+)
+
+if _AGENT_RUNTIME.startswith("gemini-") and _gemini_placeholder:
     print(
         "\n  GEMINI_API_KEY is unset or a stub.\n"
         "   The agent will boot but chat will fail on the first turn.\n"
@@ -83,17 +95,31 @@ if _AGENT_RUNTIME.startswith("gemini-") and (
     )
 
 
-backend_tools = load_notion_tools()
+if _coachme_skip_notion():
+    from src.agent import load_coaching_tools
+
+    backend_tools = load_coaching_tools()
+
+    tl_key = os.getenv("TWELVELABS_API_KEY", "").strip()
+    tl_idx = os.getenv("TWELVELABS_INDEX_ID", "").strip()
+    _integration_snapshot = (
+        f"coachme=twelve_labs pegasus_analyze=ON marengo_search=ON "
+        f"twelvelabs_api_key={'set' if tl_key else 'MISSING'} "
+        f"twelvelabs_index_id={'set' if tl_idx else 'MISSING'} "
+        f"| Notion MCP tools omitted (COACHME_SKIP_NOTION=1)."
+    )
+    print(f"[coachme] {_integration_snapshot}", flush=True)
+    SYSTEM_PROMPT = build_coachme_system_prompt(_integration_snapshot)
+
+else:
+
+    backend_tools = load_notion_tools()
+
+    _integration_status = _format_integration_status()
+    SYSTEM_PROMPT = build_system_prompt(_integration_status)
 
 
-_integration_status = _format_integration_status()
-SYSTEM_PROMPT = build_system_prompt(_integration_status)
-
-
-_use_noop = (
-    _AGENT_RUNTIME.startswith("gemini-")
-    and (not _gemini_key or _gemini_key.startswith("stub"))
-)
+_use_noop = _AGENT_RUNTIME.startswith("gemini-") and _gemini_placeholder
 if _use_noop:
     print(
         "\n[runtime] GEMINI_API_KEY missing or stub — using noop fallback graph.\n"

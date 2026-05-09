@@ -6,11 +6,11 @@
 #   2. npx is available so `@notionhq/notion-mcp-server` can be fetched
 #      on demand. We don't pull the package here (slow) — we just prove
 #      the resolver works.
-#   3. apps/agent/.env exists and has GEMINI_API_KEY, NOTION_TOKEN, and
-#      NOTION_LEADS_DATABASE_ID set to non-stub values.
-#   4. Notion is reachable AND the leads database is shared with the
-#      integration. Defers to `apps/agent/src/notion_tools.py --check`, which
-#      reports an actionable FAIL: with the share-gotcha fix on a 404.
+#   3. apps/agent/.env exists and GEMINI_API_KEY is set (non-placeholder).
+#      By default NOTION_* are also required unless COACHME_SKIP_NOTION is
+#      set to 1/true/yes in apps/agent/.env (CoachMe+ path).
+#   4. Notion is reachable AND the leads database is shared — skipped when
+#      COACHME_SKIP_NOTION is enabled (same flag as step 3).
 #
 # Collects every problem into a numbered list rather than bailing on the
 # first failure, so participants can fix the whole batch in one pass.
@@ -21,6 +21,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 PROBLEMS=()
+SKIP_NOTION_AFTER_LOAD=0
 
 # ---------- 1. Docker daemon -------------------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
@@ -49,11 +50,21 @@ else
     local v="$1"
     [[ -z "$v" ]] && return 0
     case "$v" in
-      stub*|"<paste"*|"<set"*|"replace-with-"*) return 0 ;;
+      stub*|your_*|"<paste"*|"<set"*|"replace-with-"*) return 0 ;;
     esac
     return 1
   }
+
+  coachme_flag="$(read_var COACHME_SKIP_NOTION || true)"
+  coachme_lc="$(printf '%s' "$coachme_flag" | tr '[:upper:]' '[:lower:]')"
+  if [[ "$coachme_lc" == "1" || "$coachme_lc" == "true" || "$coachme_lc" == "yes" ]]; then
+    SKIP_NOTION_AFTER_LOAD=1
+  fi
+
   for VAR in GEMINI_API_KEY NOTION_TOKEN NOTION_LEADS_DATABASE_ID; do
+    if [[ "$SKIP_NOTION_AFTER_LOAD" -eq 1 ]] && [[ "$VAR" == NOTION_TOKEN || "$VAR" == NOTION_LEADS_DATABASE_ID ]]; then
+      continue
+    fi
     val="$(read_var "$VAR" || true)"
     if is_stub "$val"; then
       case "$VAR" in
@@ -75,7 +86,7 @@ fi
 # Only run the live health check if the env vars passed (no point hitting the
 # network when we know auth will fail). The script prints OK: ... or FAIL: ...
 # with the share-gotcha fix on a 404.
-if [[ ${#PROBLEMS[@]} -eq 0 ]]; then
+if [[ ${#PROBLEMS[@]} -eq 0 && "$SKIP_NOTION_AFTER_LOAD" -eq 0 ]]; then
   HEALTH_OUT="$(cd "$REPO_ROOT/apps/agent" && uv run python -m src.notion_tools --check 2>&1 || true)"
   if ! grep -q "^OK: " <<<"$HEALTH_OUT"; then
     # Pass the FAIL output through verbatim — the --check flag already

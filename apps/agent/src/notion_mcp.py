@@ -1,5 +1,7 @@
 """MCP-Use client wrapper around the official Notion MCP server.
 
+**CoachMe+:** Unused when ``COACHME_SKIP_NOTION=1`` — keep file for CRM mode.
+
 Replaces the previous Composio HTTP backend. Spawns
 `npx -y @notionhq/notion-mcp-server` over stdio for the duration of each
 call and exposes a tiny synchronous facade so `notion_integration.py`

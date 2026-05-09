@@ -130,7 +130,13 @@ class LeadStateMiddleware(AgentMiddleware[LeadCanvasState, Any]):  # type: ignor
           - the lead store is empty / errored — the user should still be
             able to call ``fetch_notion_leads`` explicitly and see the
             failure surface there, not silently here.
+          - CoachMe+ (`COACHME_SKIP_NOTION=1`) skips auto-hydration so we
+            don't paint the CRM starter board over a boxing workflow.
         """
+        flag = (os.getenv("COACHME_SKIP_NOTION") or "").strip().lower()
+        if flag in ("1", "true", "yes"):
+            return None
+
         # State arrives as a dict at runtime even though the schema is a
         # TypedDict; access fields defensively.
         existing_leads = (state or {}).get("leads") if isinstance(state, dict) else None

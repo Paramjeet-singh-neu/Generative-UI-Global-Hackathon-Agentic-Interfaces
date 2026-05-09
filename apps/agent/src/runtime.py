@@ -63,8 +63,9 @@ def build_graph(
         runtime: One of `gemini-flash-deep`, `gemini-flash-react`,
             `claude-sonnet-4-6-react`. Anything else falls back to
             `gemini-flash-deep` with a warning.
-        tools: Notion-MCP-backed + local backend tools to bind. Frontend
-            tools are forwarded by `CopilotKitMiddleware` at run time and
+        tools: Backend tools (`load_notion_tools()` or CoachMe+
+            `load_coaching_tools()` — see `main.py`). Frontend tools are
+            forwarded by `CopilotKitMiddleware` at run time and
             must NOT appear here (Gemini rejects duplicate function
             declarations).
         system_prompt: Already-composed system prompt (with the integration

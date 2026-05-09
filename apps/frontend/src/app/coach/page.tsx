@@ -30,7 +30,7 @@ import {
 } from "@copilotkit/react-core/v2";
 
 import CoachingCanvas from "@/components/coaching/CoachingCanvas";
-import DrillCard from "@/components/coaching/DrillCard";
+import CoachGenDrillCard from "@/components/coaching/CoachGenDrillCard";
 import ScoreRing from "@/components/coaching/ScoreRing";
 import { ToolFallbackCard } from "@/components/copilot/ToolFallbackCard";
 import { ThreadsDrawer } from "@/components/threads-drawer";
@@ -62,14 +62,6 @@ function CoachCanvasInner() {
       if (!agent) return;
       const next = { ...mergeAgentState(agent.state), ...patch };
       agent.setState(next);
-    },
-    [agent],
-  );
-
-  const updateState = useCallback(
-    (updater: (prev: AgentState) => AgentState) => {
-      if (!agent) return;
-      agent.setState(updater(mergeAgentState(agent.state)));
     },
     [agent],
   );
@@ -107,39 +99,16 @@ function CoachCanvasInner() {
       focus: z.string(),
       reason: z.string().optional(),
     }),
-    render: ({ args }) => {
-      const drillName = args.name ?? "Drill";
-      const drillReps = args.reps ?? 10;
-      const drillFocus = args.focus ?? "";
-      return (
-        <div className="mb-3 border-l-4 border-l-[var(--accent-red)] pl-3">
-          <DrillCard
-            name={drillName}
-            reps={drillReps}
-            focus={drillFocus}
-            reason={args.reason ?? ""}
-            onApprove={() => {
-              updateState((prev) => ({
-                ...prev,
-                approved_drills: [
-                  ...new Set([...(prev.approved_drills ?? []), drillName]),
-                ],
-              }));
-              toast.success(`Logged: ${drillName}`);
-            }}
-            onSkip={() => {
-              updateState((prev) => ({
-                ...prev,
-                skipped_drills: [
-                  ...new Set([...(prev.skipped_drills ?? []), drillName]),
-                ],
-              }));
-              toast.message(`Skipped: ${drillName}`);
-            }}
-          />
-        </div>
-      );
-    },
+    render: ({ args }) => (
+      <div className="mb-3 border-l-4 border-l-[var(--accent-red)] pl-3">
+        <CoachGenDrillCard
+          name={args.name ?? "Drill"}
+          reps={args.reps ?? 10}
+          focus={args.focus ?? ""}
+          reason={args.reason}
+        />
+      </div>
+    ),
   });
 
   useFrontendTool({

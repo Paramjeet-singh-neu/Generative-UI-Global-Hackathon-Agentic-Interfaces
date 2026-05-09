@@ -107,6 +107,32 @@ The kit's `apps/mcp/` package is an MCP server built with [`mcp-use`](https://ma
 
 > `npm run dev` runs a pre-flight check (`scripts/check-env.sh`) before booting anything — it'll fail loudly with a numbered list of any missing keys, an unreachable Notion database, or a Docker daemon that isn't running. Fix what it lists, re-run, and you're off. See [dev-docs/troubleshooting.md](dev-docs/troubleshooting.md) for fixes per failure mode.
 
+### Running frontend only (no agent/BFF needed)
+
+Use this for a quick UI pass or when you only want the CoachMe+ canvas without Docker, Intelligence, or LangGraph:
+
+```bash
+cd apps/frontend
+NEXT_PUBLIC_COACHING_MOCK=1 npm run dev
+```
+
+Open [http://localhost:3010/coach](http://localhost:3010/coach) — the coaching canvas renders with mock data. Click any suggestion chip or the **Load mock JSON** button to exercise the full UI.
+
+### Running full stack (CoachMe+ with agent)
+
+Requires the repo-root `npm run dev` (Docker infra + Next.js on **3010**, BFF, LangGraph on **8133**). For the boxing track, set in **`apps/agent/.env`** (and mirror keys in root `.env` as needed):
+
+- `TWELVELABS_API_KEY`
+- `GEMINI_API_KEY`
+- `COACHME_SKIP_NOTION=1`
+- `COACHME_USE_CACHE=1` (optional — skips live TwelveLabs and loads `apps/agent/src/coaching_cache.json` for a fast demo)
+
+```bash
+npm run dev   # from monorepo root
+```
+
+Open [http://localhost:3010/coach](http://localhost:3010/coach) and type something like **"analyze my jab drill"** in the sidebar.
+
 Please give us feedback on your experience with it!
 
 ### Notion setup

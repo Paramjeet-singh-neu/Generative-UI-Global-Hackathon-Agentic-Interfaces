@@ -10,14 +10,19 @@ interface Props {
   name: string;
   reps: number;
   focus: string;
-  reason: string;
+  reason?: string;
 }
 
 /**
  * Renders inside `useFrontendTool({ name: "generateDrill" })` so `useAgent`
  * stays fresh (v2 render closure pattern — same idea as LiveWorkshopDemand).
  */
-export default function CoachGenDrillCard({ name, reps, focus, reason }: Props) {
+export default function CoachGenDrillCard({
+  name,
+  reps,
+  focus,
+  reason = "",
+}: Props) {
   const { agent } = useAgent();
   const merged = mergeAgentState(agent?.state);
   const approvedList = merged.approved_drills ?? [];
@@ -30,7 +35,7 @@ export default function CoachGenDrillCard({ name, reps, focus, reason }: Props) 
 
   return (
     <div className="my-2">
-      <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="font-coach-body mb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
         Agent-generated drill
       </p>
       <DrillCard

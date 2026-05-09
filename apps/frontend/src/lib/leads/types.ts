@@ -1,3 +1,5 @@
+import type { CoachingAgentStatus, CoachingData } from "../coaching/types";
+
 export type TechLevel =
   | "Non-technical"
   | "Some technical"
@@ -84,6 +86,9 @@ export interface AgentState {
   selectedLeadId: string | null;
   header: { title: string; subtitle: string };
   sync: SyncMeta;
+  /** CoachMe+ session payload; set by `analyze_boxing_clip` Command(update=). */
+  coaching_data: CoachingData | null;
+  coaching_status: CoachingAgentStatus;
 }
 
 // Mirrors the Python `NotionHealth` TypedDict in

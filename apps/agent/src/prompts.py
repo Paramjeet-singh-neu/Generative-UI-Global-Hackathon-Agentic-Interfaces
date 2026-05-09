@@ -278,6 +278,8 @@ COACHME_PROMPT = (
     "- **analyze_boxing_clip(video_id)** maps to the starter's old 'import leads' moment: "
     "it's the heavyweight call that extracts structured coaching (techniques + scores +\n"
     "  corrections + drills + timestamp labels) from the user's footage already indexed in TwelveLabs.\n"
+    "  It updates **agent state** (`coaching_data`, `coaching_status=complete`) in one shot — the React\n"
+    "  canvas reads that via CopilotKit `useAgent`; you do not need a separate frontend tool to paint scores.\n"
     "- **search_similar_techniques(technique_query)** replaces browsing a reference CRM sheet; "
     "it runs Marengo visual search over TWELVELABS_INDEX_ID.\n\n"
     "Operational rules:\n"

@@ -355,11 +355,15 @@ function CoachCanvasInner() {
       ) : null}
 
       <div className="coach-app font-coach-body min-h-0 flex-1 overflow-y-auto">
-        <header className="sticky top-0 z-10 border-b border-[var(--border-subtle)] bg-[var(--bg-card)]/95 px-6 py-4 backdrop-blur">
+        <header className="sticky top-0 z-10 border-b border-[var(--border-subtle)] bg-[var(--bg-card)]/75 px-6 py-4 backdrop-blur-xl">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent-red)]/60 to-transparent"
+            aria-hidden
+          />
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
             <Link
               href="/"
-              className="font-coach-body text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent-amber)]"
+              className="font-coach-body text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--accent-amber)]"
             >
               ← Home
             </Link>
@@ -367,23 +371,34 @@ function CoachCanvasInner() {
               <button
                 type="button"
                 onClick={loadMock}
-                className="font-coach-body rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-card-hover)]"
+                className="font-coach-body rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/80 px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] shadow-md backdrop-blur-sm transition-all hover:border-[rgba(230,57,70,0.35)] hover:bg-[var(--bg-card-hover)]"
               >
                 Load mock JSON
               </button>
-              <span className="font-coach-body text-xs text-[var(--text-secondary)]">
-                Live: shared LangGraph state via{" "}
-                <code className="rounded bg-[var(--bg-primary)] px-1">
-                  useAgent
-                </code>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 px-2.5 py-1 font-coach-body text-[11px] text-[var(--text-secondary)]">
+                <span
+                  className="size-1.5 shrink-0 animate-pulse rounded-full bg-[var(--accent-green)] shadow-[0_0_8px_rgba(42,157,143,0.7)]"
+                  aria-hidden
+                />
+                Live stack ·{" "}
+                <code className="text-[var(--text-primary)]/90">useAgent</code>
               </span>
             </div>
           </div>
         </header>
-        <main className="mx-auto max-w-5xl p-6">
-          <h1 className="font-coach-heading mb-6 text-2xl tracking-tight text-[var(--text-primary)]">
-            CoachMe+ 🥊
-          </h1>
+        <main className="mx-auto max-w-5xl px-6 pb-10 pt-8">
+          <div className="mb-8 border-b border-[var(--border-subtle)] pb-6">
+            <p className="font-coach-body mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-amber)]">
+              Generative coaching
+            </p>
+            <h1 className="font-coach-heading coach-page-title-gradient text-3xl tracking-tight sm:text-4xl">
+              CoachMe+
+            </h1>
+            <p className="font-coach-body mt-2 max-w-xl text-sm text-[var(--text-secondary)]">
+              Tape breakdown, drill plans, and session memory — wired to your agent
+              stack.
+            </p>
+          </div>
           <CoachingCanvas />
         </main>
       </div>

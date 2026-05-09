@@ -89,6 +89,12 @@ export interface AgentState {
   /** CoachMe+ session payload; set by `analyze_boxing_clip` Command(update=). */
   coaching_data: CoachingData | null;
   coaching_status: CoachingAgentStatus;
+  /** Drill names the athlete approved (canvas + chat DrillCards). */
+  approved_drills?: string[];
+  /** Skipped drills — omitted on next `analyze_boxing_clip` server-side filter. */
+  skipped_drills?: string[];
+  /** Count of successful clip analyses in this thread. */
+  clips_analyzed?: number;
 }
 
 // Mirrors the Python `NotionHealth` TypedDict in

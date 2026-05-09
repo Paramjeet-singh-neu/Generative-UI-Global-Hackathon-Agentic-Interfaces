@@ -20,16 +20,18 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Annotated, Any, List
+from typing import Annotated, Any, Dict, List
 
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import InjectedToolCallId, tool
+from langgraph.prebuilt import InjectedState
 from langgraph.types import Command
 
 
 @tool
 def analyze_boxing_clip(
     video_id: str,
+    state: Annotated[Dict[str, Any], InjectedState] = None,
     tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> Command:
     """Analyze an indexed TwelveLabs clip (Pegasus): coaching payload aligned with `mock_coaching_data.json`.
@@ -49,6 +51,15 @@ def analyze_boxing_clip(
         from .twelvelabs_client import analyze_clip
 
         data = analyze_clip(vid)
+        st = state or {}
+        skipped = st.get("skipped_drills") or []
+        if isinstance(skipped, list) and data.get("drills"):
+            data = dict(data)
+            data["drills"] = [
+                d
+                for d in data["drills"]
+                if isinstance(d, dict) and d.get("name") not in skipped
+            ]
         n_t = len(data.get("techniques") or [])
         n_d = len(data.get("drills") or [])
         score = data.get("overall_score", "?")
@@ -58,10 +69,16 @@ def analyze_boxing_clip(
             f"{n_t} technique(s), {n_d} drill(s). "
             "The coaching canvas is updated — summarize for the athlete."
         )
+        prev_n = st.get("clips_analyzed")
+        try:
+            clips_n = int(prev_n) + 1 if prev_n is not None else 1
+        except (TypeError, ValueError):
+            clips_n = 1
         return Command(
             update={
                 "coaching_data": data,
                 "coaching_status": "complete",
+                "clips_analyzed": clips_n,
                 "messages": [ToolMessage(content=summary, tool_call_id=tool_call_id)],
             }
         )

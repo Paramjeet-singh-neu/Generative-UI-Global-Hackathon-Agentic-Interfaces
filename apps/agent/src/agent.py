@@ -64,7 +64,13 @@ def _load_coaching_payload(video_id: str) -> Dict[str, Any]:
 
     if _coachme_use_cache() and os.path.isfile(_COACHING_CACHE_PATH):
         with open(_COACHING_CACHE_PATH, encoding="utf-8") as f:
-            return copy.deepcopy(json.load(f))
+            data = copy.deepcopy(json.load(f))
+        demo = os.getenv("COACHME_DEMO_VIDEO_URL", "").strip()
+        if demo:
+            payload = dict(data) if isinstance(data, dict) else {}
+            payload.setdefault("video_url", demo)
+            return payload
+        return data
     from .twelvelabs_client import analyze_clip
 
     return analyze_clip(video_id.strip())

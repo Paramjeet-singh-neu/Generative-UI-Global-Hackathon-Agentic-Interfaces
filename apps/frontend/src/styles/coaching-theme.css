@@ -1,32 +1,49 @@
 /* CoachMe+ dark sports-tech theme — scoped via .coach-app wrapper */
 
 :root {
-  --bg-primary: #0f0f13;
-  --bg-card: #1a1a24;
-  --bg-card-hover: #22222e;
-  --text-primary: #f0ece4;
+  --bg-primary: #0a0a0e;
+  --bg-card: #14141c;
+  --bg-card-hover: #1c1c28;
+  --text-primary: #f4f0e8;
   --text-secondary: #9ca3af;
   --accent-red: #e63946;
   --accent-amber: #f4a261;
   --accent-green: #2a9d8f;
-  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --coach-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --coach-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.55);
+  --coach-sheen: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0) 50%
+  );
 }
 
 .coach-app {
   --coach-ring-track: #2a2a36;
+  position: relative;
+  isolation: isolate;
   color: var(--text-primary);
-  background: var(--bg-primary);
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -15%, rgba(230, 57, 70, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 30%, rgba(244, 162, 97, 0.09), transparent),
+    radial-gradient(ellipse 45% 35% at 0% 70%, rgba(42, 157, 143, 0.07), transparent),
+    linear-gradient(180deg, #0d0d12 0%, var(--bg-primary) 45%, #08080c 100%);
 }
 
 .coach-app .coach-card-surface {
-  background: var(--bg-card);
+  position: relative;
+  background: var(--coach-sheen), var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 1rem;
-  transition: background-color 0.25s ease, border-color 0.25s ease;
+  border-radius: 1.125rem;
+  box-shadow: var(--coach-shadow-sm);
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .coach-app .coach-card-surface:hover {
-  background: var(--bg-card-hover);
+  background: var(--coach-sheen), var(--bg-card-hover);
+  box-shadow: var(--coach-shadow-md);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .coach-app .coach-card-interactive:hover {
@@ -45,6 +62,69 @@
 
 .coach-float-emoji {
   animation: coach-float 3s ease-in-out infinite;
+}
+
+/* Idle hero — soft spotlight behind glove emoji */
+.coach-hero-spotlight {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coach-hero-spotlight::before {
+  content: "";
+  position: absolute;
+  width: min(280px, 85vw);
+  height: min(280px, 85vw);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(230, 57, 70, 0.22) 0%,
+    rgba(244, 162, 97, 0.08) 45%,
+    transparent 70%
+  );
+  filter: blur(2px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.coach-hero-spotlight > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Suggestion & secondary actions */
+.coach-chip {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(20, 20, 28, 0.6);
+  color: var(--text-secondary);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.coach-chip:hover {
+  border-color: rgba(230, 57, 70, 0.55);
+  color: var(--accent-red);
+  box-shadow: 0 0 20px rgba(230, 57, 70, 0.15);
+  transform: translateY(-1px);
+}
+
+.coach-page-title-gradient {
+  background: linear-gradient(
+    105deg,
+    var(--text-primary) 0%,
+    #fff 38%,
+    var(--accent-amber) 95%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 @keyframes coach-dot-pulse {

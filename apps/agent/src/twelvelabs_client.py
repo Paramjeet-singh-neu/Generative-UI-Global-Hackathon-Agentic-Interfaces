@@ -22,7 +22,8 @@ from twelvelabs import TwelveLabs
 
 logger = logging.getLogger(__name__)
 
-PEGASUS_MODEL_LATEST = "pegasus1.5"
+# Sync `analyze(video_id=...)` only supports Pegasus 1.2; 1.5 requires `video` (asset/url/base64).
+PEGASUS_MODEL_INDEXED_VIDEO = "pegasus1.2"
 
 _SEVERITY_ALLOWED = frozenset({"high", "medium", "low"})
 
@@ -235,32 +236,55 @@ def _normalize_coaching_dict(data: dict[str, Any], video_id: str) -> dict[str, A
     }
     if "raw_text" in data:
         out["raw_text"] = data["raw_text"]
+    vu = data.get("video_url")
+    if isinstance(vu, str) and vu.strip():
+        out["video_url"] = vu.strip()
     return out
 
 
-def _video_duration_seconds(video_id: str) -> float | None:
-    """Best-effort duration from index metadata (needs TWELVELABS_INDEX_ID)."""
+def _indexed_video_extras(video_id: str) -> tuple[float | None, str | None]:
+    """Single index retrieve: duration (seconds) + HLS playback URL when streaming was enabled at upload.
+
+    Returns (duration, video_url). Either may be None if unavailable.
+    """
 
     index_id = os.getenv("TWELVELABS_INDEX_ID", "").strip()
     vid = video_id.strip()
     if not index_id or not vid:
-        return None
+        return None, None
     try:
-        meta = _client().indexes.videos.retrieve(index_id=index_id, video_id=vid)
+        resp = _client().indexes.videos.retrieve(index_id=index_id, video_id=vid)
     except Exception:
-        logger.debug("[twelvelabs] Could not retrieve video metadata for duration.", exc_info=True)
-        return None
-    sm = getattr(meta, "system_metadata", None)
-    if sm is None:
-        return None
-    dur = getattr(sm, "duration", None)
-    try:
-        d = float(dur)
-    except (TypeError, ValueError):
-        return None
-    if d <= 0:
-        return None
-    return d
+        logger.debug(
+            "[twelvelabs] Could not retrieve indexed video for duration / playback URL.",
+            exc_info=True,
+        )
+        return None, None
+
+    dur_val: float | None = None
+    sm = getattr(resp, "system_metadata", None)
+    if sm is not None:
+        raw_d = getattr(sm, "duration", None)
+        try:
+            d = float(raw_d)
+            if d > 0:
+                dur_val = min(3600.0, d)
+        except (TypeError, ValueError):
+            pass
+
+    playback: str | None = None
+    hls = getattr(resp, "hls", None)
+    if hls is not None:
+        vu = getattr(hls, "video_url", None)
+        st = getattr(hls, "status", None)
+        if isinstance(vu, str) and vu.strip():
+            # Use manifest URL whenever TwelveLabs provides it, unless explicitly failed.
+            # API may report COMPLETE, READY, or omit status while URL is already valid.
+            bad = {"FAILED", "ERROR"}
+            if str(st).upper() not in bad:
+                playback = vu.strip()
+
+    return dur_val, playback
 
 
 def analyze_clip(video_id: str) -> dict[str, Any]:
@@ -273,7 +297,7 @@ def analyze_clip(video_id: str) -> dict[str, Any]:
     resp = _client().analyze(
         video_id=vid,
         prompt=_ANALYSIS_JSON_GUIDE,
-        model_name=PEGASUS_MODEL_LATEST,
+        model_name=PEGASUS_MODEL_INDEXED_VIDEO,
         temperature=0.2,
     )
     structured = _json_from_analyze_payload(resp.data)
@@ -281,9 +305,11 @@ def analyze_clip(video_id: str) -> dict[str, Any]:
     structured.setdefault("drills", [])
     structured.setdefault("timestamps", [])
     out = _normalize_coaching_dict(structured, vid)
-    dur = _video_duration_seconds(vid)
+    dur, playback = _indexed_video_extras(vid)
     if dur is not None:
-        out["video_duration"] = round(min(3600.0, max(1.0, dur)), 2)
+        out["video_duration"] = round(max(1.0, dur), 2)
+    if playback:
+        out["video_url"] = playback
     return out
 
 

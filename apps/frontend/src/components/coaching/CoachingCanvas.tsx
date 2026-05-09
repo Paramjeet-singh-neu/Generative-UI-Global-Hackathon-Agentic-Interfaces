@@ -208,77 +208,90 @@ export default function CoachingCanvas() {
 
   if (status === "error") {
     return (
-      <div className="mt-20 text-center">
-        <p className="mb-4 text-4xl" aria-hidden>
-          ⚠️
-        </p>
-        <p
-          className="font-coach-heading text-lg font-semibold"
-          style={{ color: "var(--accent-red)" }}
-        >
-          Couldn&apos;t read that footage
-        </p>
-        <p className="font-coach-body mt-2 text-sm text-[var(--text-secondary)]">
-          Let&apos;s try that again — drop another clip, check the chat for
-          details (TwelveLabs key, index, or video_id), or use{" "}
-          <span className="text-[var(--text-primary)]">Load mock JSON</span>.
-        </p>
-        <button
-          type="button"
-          onClick={() =>
-            updateState((prev) => ({
-              ...prev,
-              coaching_status: "idle",
-              coaching_data: null,
-            }))
-          }
-          className="font-coach-body mt-6 rounded-full px-6 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "var(--accent-red)" }}
-        >
-          Try again
-        </button>
+      <div className="mx-auto mt-8 max-w-md text-center">
+        <div className="coach-card-surface px-6 py-10">
+          <div
+            className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] text-2xl shadow-inner"
+            aria-hidden
+          >
+            ⚠️
+          </div>
+          <p
+            className="font-coach-heading text-lg font-semibold"
+            style={{ color: "var(--accent-red)" }}
+          >
+            Couldn&apos;t read that footage
+          </p>
+          <p className="font-coach-body mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+            Try another clip, confirm TwelveLabs key / index /{" "}
+            <span className="font-mono text-[var(--text-primary)]">video_id</span>{" "}
+            in chat, or use{" "}
+            <span className="text-[var(--text-primary)]">Load mock JSON</span>.
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              updateState((prev) => ({
+                ...prev,
+                coaching_status: "idle",
+                coaching_data: null,
+              }))
+            }
+            className="font-coach-body mt-8 w-full rounded-xl bg-[var(--accent-red)] py-3 text-sm font-semibold text-white shadow-lg transition-all hover:brightness-110"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     );
   }
 
   if (!coachingData) {
     return (
-      <div className="mt-12 flex flex-col items-center px-4 text-center">
-        <p className="coach-float-emoji mb-6 text-6xl" aria-hidden>
-          🥊
-        </p>
-        <h2 className="font-coach-heading mb-2 text-2xl text-[var(--text-primary)]">
+      <div className="mt-4 flex flex-col items-center px-4 text-center">
+        <div className="coach-hero-spotlight mb-8">
+          <p className="coach-float-emoji text-7xl drop-shadow-[0_8px_32px_rgba(230,57,70,0.25)]" aria-hidden>
+            🥊
+          </p>
+        </div>
+        <h2 className="font-coach-heading mb-2 text-3xl tracking-tight text-[var(--text-primary)] sm:text-4xl">
           Step into the ring
         </h2>
-        <p className="font-coach-body mb-8 max-w-md text-[var(--text-secondary)]">
-          Drop a clip or tell me what to analyze, champ
+        <p className="font-coach-body mb-10 max-w-md text-base text-[var(--text-secondary)]">
+          Upload analysis from chat or tap a starter — your breakdown lands here in
+          real time.
         </p>
         {/* Same path as CorrectionMarker: addMessage + runAgent via injectPrompt */}
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-3">
           {SUGGESTION_CHIPS.map((label) => (
             <button
               key={label}
               type="button"
               onClick={() => injectPrompt(label)}
-              className="font-coach-body rounded-full border border-[var(--border-subtle)] px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:border-[var(--accent-red)] hover:text-[var(--accent-red)]"
+              className="coach-chip font-coach-body px-5 py-2.5 text-sm font-medium"
             >
               {label}
             </button>
           ))}
         </div>
-        <p className="font-coach-body mt-10 max-w-lg text-sm text-[var(--text-secondary)]">
-          Or use{" "}
-          <span className="text-[var(--text-primary)]">Load mock JSON</span> for
-          an offline preview, or ask the coach to run{" "}
-          <span className="font-mono text-[var(--text-primary)]">
-            analyze_boxing_clip
-          </span>{" "}
-          with your TwelveLabs{" "}
-          <span className="font-mono text-[var(--text-primary)]">video_id</span>
-          .
-        </p>
-        <p className="font-coach-body mt-6 text-[10px] opacity-50 text-[var(--text-secondary)]">
-          ⌘K / Ctrl+K to open coach · ⌘M / Ctrl+M to load mock JSON
+        <div className="mt-12 max-w-lg rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/50 px-5 py-4 text-left shadow-lg backdrop-blur-sm">
+          <p className="font-coach-body text-sm text-[var(--text-secondary)]">
+            <span className="text-[var(--text-primary)]">Offline?</span> Use{" "}
+            <span className="text-[var(--text-primary)]">Load mock JSON</span>{" "}
+            in the header. <span className="text-[var(--text-primary)]">Live?</span>{" "}
+            Ask the coach to run{" "}
+            <span className="font-mono text-xs text-[var(--accent-amber)]">
+              analyze_boxing_clip
+            </span>{" "}
+            with your TwelveLabs{" "}
+            <span className="font-mono text-xs text-[var(--accent-amber)]">
+              video_id
+            </span>
+            .
+          </p>
+        </div>
+        <p className="font-coach-body mt-6 text-[10px] text-[var(--text-secondary)]/60">
+          ⌘K / Ctrl+K — coach · ⌘M / Ctrl+M — mock JSON
         </p>
       </div>
     );
@@ -436,6 +449,8 @@ export default function CoachingCanvas() {
           <CorrectionMarker
             timestamps={coachingData.timestamps!}
             onMarkerClick={handleMarkerClick}
+            videoUrl={coachingData.video_url}
+            durationSeconds={coachingData.video_duration}
           />
         </StaggerSection>
       ) : null}

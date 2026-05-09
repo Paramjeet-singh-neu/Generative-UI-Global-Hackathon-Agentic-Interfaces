@@ -436,6 +436,8 @@ export default function CoachingCanvas() {
           <CorrectionMarker
             timestamps={coachingData.timestamps!}
             onMarkerClick={handleMarkerClick}
+            videoUrl={coachingData.video_url}
+            durationSeconds={coachingData.video_duration}
           />
         </StaggerSection>
       ) : null}

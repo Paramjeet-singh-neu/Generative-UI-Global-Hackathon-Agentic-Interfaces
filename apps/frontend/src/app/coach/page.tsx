@@ -315,7 +315,7 @@ function CoachCanvasInner() {
       {
         title: "Analyze a clip",
         message:
-          "Analyze my boxing clip with analyze_boxing_clip. My TwelveLabs video_id is YOUR_VIDEO_ID.",
+          "Analyze my boxing clip with analyze_boxing_clip. My TwelveLabs video_id is 69d0342277fafc1a8d7198a4.",
       },
       {
         title: "Similar technique search",

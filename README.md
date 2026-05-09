@@ -8,6 +8,7 @@
 
 - **AG-UI / shared state** — Backend tool `analyze_boxing_clip` returns `Command(update=…)`; the UI reads `useAgent().state` via `mergeAgentState`. Intermediate **`coaching_status: analyzing`** is emitted while Pegasus runs.
 - **TwelveLabs** — Official SDK in `apps/agent/src/twelvelabs_client.py`; schema-guided JSON; **`search_similar_techniques`** for reference clips. **`COACHME_USE_CACHE=1`** loads `apps/agent/src/coaching_cache.json` for demos without calling the API.
+- **Video on canvas** — After **`analyze_boxing_clip`**, `coaching_data.video_url` comes from **`hls.video_url`** when streaming was enabled at upload. Cached demos: **`COACHME_DEMO_VIDEO_URL`**. HLS in Chrome/Firefox uses **`hls.js`** in `CorrectionMarker`; Safari uses native HLS; MP4 uses `<video src>`.
 - **Coach mode** — Set **`COACHME_SKIP_NOTION=1`** in `apps/agent/.env` so the agent loads boxing tools (`apps/agent/main.py`, `apps/agent/src/agent.py`).
 - **Tests** — **`npm test`** runs **`pytest`** (score history + Pegasus JSON parsing) and **`vitest`** (`mergeAgentState` / coaching fields).
 

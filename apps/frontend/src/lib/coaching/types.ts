@@ -27,6 +27,10 @@ export interface CoachingData {
   techniques: TechniqueScore[];
   timestamps: TimestampMarker[];
   drills: Drill[];
+  /** HLS or direct URL from TwelveLabs (`hls.video_url`) when streaming was enabled; optional. */
+  video_url?: string;
+  /** Clip length in seconds from index metadata when available. */
+  video_duration?: number;
 }
 
 export type CoachingSessionStatus =

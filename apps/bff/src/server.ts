@@ -33,7 +33,7 @@ const app = createCopilotEndpoint({
     licenseToken: process.env.COPILOTKIT_LICENSE_TOKEN,
     agents: { default: agent },
     openGenerativeUI: true,
-    a2ui: { injectA2UITool: false },
+    a2ui: { injectA2UITool: true },
     mcpApps: {
       servers: [
         {

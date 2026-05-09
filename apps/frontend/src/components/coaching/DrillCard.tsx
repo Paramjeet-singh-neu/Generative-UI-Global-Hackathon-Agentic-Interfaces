@@ -3,6 +3,7 @@
 import type { Drill } from "@/lib/coaching/types";
 
 interface DrillCardProps extends Drill {
+  reason?: string;
   onApprove?: () => void;
   onSkip?: () => void;
   disabled?: boolean;
@@ -12,6 +13,7 @@ export default function DrillCard({
   name,
   reps,
   focus,
+  reason,
   onApprove,
   onSkip,
   disabled,
@@ -23,6 +25,11 @@ export default function DrillCard({
         <span className="font-medium text-foreground">{reps}</span> reps ·{" "}
         <span>{focus}</span>
       </p>
+      {reason ? (
+        <p className="mt-2 text-xs leading-snug text-muted-foreground">
+          {reason}
+        </p>
+      ) : null}
       <div className="mt-3 flex gap-2">
         <button
           type="button"

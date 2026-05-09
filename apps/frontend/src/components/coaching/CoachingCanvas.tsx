@@ -1,33 +1,50 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 
-import type { CoachingData, CoachingSessionStatus } from "@/lib/coaching/types";
+import type {
+  CoachingAgentStatus,
+  CoachingData,
+  CoachingSessionStatus,
+  TimestampMarker,
+} from "@/lib/coaching/types";
+import CorrectionMarker from "./CorrectionMarker";
 import DrillCard from "./DrillCard";
 import FormScoreCard from "./FormScoreCard";
+import SessionSummary from "./SessionSummary";
 
 interface CoachingCanvasProps {
   coachingData: CoachingData | null;
   status: CoachingSessionStatus;
+  approvedDrills: string[];
+  skippedDrills: string[];
+  clipsAnalyzed: number;
+  agentCoachingStatus: CoachingAgentStatus;
+  onApproveDrill: (name: string) => void;
+  onSkipDrill: (name: string) => void;
+  onResetDrillChoices: () => void;
+  onAnalyzeAnother: () => void;
+  onMarkerAction: (ts: TimestampMarker) => void;
 }
 
 export default function CoachingCanvas({
   coachingData,
   status,
+  approvedDrills,
+  skippedDrills,
+  clipsAnalyzed,
+  agentCoachingStatus,
+  onApproveDrill,
+  onSkipDrill,
+  onResetDrillChoices,
+  onAnalyzeAnother,
+  onMarkerAction,
 }: CoachingCanvasProps) {
-  const [approved, setApproved] = useState<string[]>([]);
-  const [skipped, setSkipped] = useState<string[]>([]);
-
-  const resetInteractions = useCallback(() => {
-    setApproved([]);
-    setSkipped([]);
-  }, []);
-
   const visibleDrills = useMemo(() => {
     if (!coachingData?.drills) return [];
-    return coachingData.drills.filter((d) => !skipped.includes(d.name));
-  }, [coachingData, skipped]);
+    return coachingData.drills.filter((d) => !skippedDrills.includes(d.name));
+  }, [coachingData, skippedDrills]);
 
   if (status === "analyzing") {
     return (
@@ -87,7 +104,7 @@ export default function CoachingCanvas({
         </div>
         <button
           type="button"
-          onClick={resetInteractions}
+          onClick={onResetDrillChoices}
           className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
           Reset drill choices
@@ -116,27 +133,23 @@ export default function CoachingCanvas({
           </h2>
           {visibleDrills.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              All suggested drills were skipped. Use &quot;Reset drill
-              choices&quot; to see them again.
+              All suggested drills were skipped for this session, or none
+              remain. Re-analyze after skipping, or reset drill choices.
             </p>
           ) : (
             visibleDrills.map((d) => {
-              const done = approved.includes(d.name);
+              const done = approvedDrills.includes(d.name);
               return (
                 <DrillCard
                   key={d.name}
                   {...d}
                   disabled={done}
                   onApprove={() => {
-                    setApproved((prev) =>
-                      prev.includes(d.name) ? prev : [...prev, d.name],
-                    );
+                    onApproveDrill(d.name);
                     toast.success(`Logged: ${d.name}`);
                   }}
                   onSkip={() => {
-                    setSkipped((prev) =>
-                      prev.includes(d.name) ? prev : [...prev, d.name],
-                    );
+                    onSkipDrill(d.name);
                     toast.message(`Skipped: ${d.name}`);
                   }}
                 />
@@ -147,39 +160,19 @@ export default function CoachingCanvas({
       </div>
 
       {coachingData.timestamps?.length ? (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <h2 className="mb-2 text-lg font-semibold text-foreground">
-            Timestamp cues
-          </h2>
-          <p className="mb-3 text-sm text-muted-foreground">
-            Correction markers on a timeline will plug in here next; data is
-            already in the mock contract.
-          </p>
-          <ul className="space-y-2 text-sm">
-            {coachingData.timestamps.map((ts) => (
-              <li
-                key={`${ts.time}-${ts.label}`}
-                className="flex flex-wrap items-center gap-2"
-              >
-                <span className="tabular-nums text-muted-foreground">
-                  {ts.time}s
-                </span>
-                <span
-                  className={`rounded px-1.5 py-0.5 text-xs font-medium ${
-                    ts.severity === "high"
-                      ? "bg-red-100 text-red-800"
-                      : ts.severity === "medium"
-                        ? "bg-amber-100 text-amber-900"
-                        : "bg-emerald-100 text-emerald-900"
-                  }`}
-                >
-                  {ts.severity}
-                </span>
-                <span className="text-foreground">{ts.label}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <CorrectionMarker
+          timestamps={coachingData.timestamps}
+          onMarkerClick={onMarkerAction}
+        />
+      ) : null}
+
+      {agentCoachingStatus === "complete" && coachingData ? (
+        <SessionSummary
+          overallScore={coachingData.overall_score}
+          clipsAnalyzed={clipsAnalyzed}
+          drillsApproved={approvedDrills.length}
+          onAnalyzeAnother={onAnalyzeAnother}
+        />
       ) : null}
     </div>
   );

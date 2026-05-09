@@ -1,0 +1,42 @@
+{
+  "session_id": "00000000-0000-4000-8000-000000000001",
+  "clip_name": "demo_cached_clip",
+  "overall_score": 65,
+  "video_duration": 20,
+  "techniques": [
+    {
+      "name": "jab",
+      "score": 72,
+      "correction": "Elbow dropping on extension"
+    },
+    {
+      "name": "guard",
+      "score": 58,
+      "correction": "Guard dropping after combination"
+    }
+  ],
+  "timestamps": [
+    {
+      "time": 4.2,
+      "label": "Elbow drop on jab",
+      "severity": "high"
+    },
+    {
+      "time": 11.8,
+      "label": "Guard dropped",
+      "severity": "medium"
+    }
+  ],
+  "drills": [
+    {
+      "name": "Wall jab drill",
+      "reps": 20,
+      "focus": "Elbow alignment"
+    },
+    {
+      "name": "Guard reset drill",
+      "reps": 15,
+      "focus": "Return guard after combo"
+    }
+  ]
+}

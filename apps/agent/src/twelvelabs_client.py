@@ -238,6 +238,31 @@ def _normalize_coaching_dict(data: dict[str, Any], video_id: str) -> dict[str, A
     return out
 
 
+def _video_duration_seconds(video_id: str) -> float | None:
+    """Best-effort duration from index metadata (needs TWELVELABS_INDEX_ID)."""
+
+    index_id = os.getenv("TWELVELABS_INDEX_ID", "").strip()
+    vid = video_id.strip()
+    if not index_id or not vid:
+        return None
+    try:
+        meta = _client().indexes.videos.retrieve(index_id=index_id, video_id=vid)
+    except Exception:
+        logger.debug("[twelvelabs] Could not retrieve video metadata for duration.", exc_info=True)
+        return None
+    sm = getattr(meta, "system_metadata", None)
+    if sm is None:
+        return None
+    dur = getattr(sm, "duration", None)
+    try:
+        d = float(dur)
+    except (TypeError, ValueError):
+        return None
+    if d <= 0:
+        return None
+    return d
+
+
 def analyze_clip(video_id: str) -> dict[str, Any]:
     """Run Pegasus prompt-based coaching analysis for an indexed TwelveLabs video."""
 
@@ -255,7 +280,11 @@ def analyze_clip(video_id: str) -> dict[str, Any]:
     structured.setdefault("techniques", [])
     structured.setdefault("drills", [])
     structured.setdefault("timestamps", [])
-    return _normalize_coaching_dict(structured, vid)
+    out = _normalize_coaching_dict(structured, vid)
+    dur = _video_duration_seconds(vid)
+    if dur is not None:
+        out["video_duration"] = round(min(3600.0, max(1.0, dur)), 2)
+    return out
 
 
 def get_similar_techniques(technique_query: str) -> list[dict[str, Any]]:

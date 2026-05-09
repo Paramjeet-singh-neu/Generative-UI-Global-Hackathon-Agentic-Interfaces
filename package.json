@@ -23,6 +23,7 @@
     "install:mcp": "npm install --workspace mcp",
     "postinstall": "npm run install:agent",
     "license": "npx copilotkit license -n hackathon-kit",
+    "judge:coachme": "node -e \"console.log('\\nCoachMe+ demo path:\\n  1. npm run dev   (from repo root)\\n  2. Open http://localhost:3010/coach\\n  3. apps/agent/.env: COACHME_SKIP_NOTION=1, GEMINI_API_KEY, TWELVELABS_*\\n  4. Optional instant Pegasus: COACHME_USE_CACHE=1\\n  Judge doc: docs/HACKATHON_COACHME_JUDGE.md\\n')\"",
     "build": "npm run build --workspace frontend",
     "start": "npm run start --workspace frontend",
     "lint": "npm run lint --workspace frontend"

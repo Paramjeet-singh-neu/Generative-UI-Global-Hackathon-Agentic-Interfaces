@@ -1,26 +1,26 @@
 "use client";
 
 /**
- * CoachMe+ route — CopilotKit v2 + LangGraph shared state (same pattern as /leads).
- *
- * Data path: `analyze_boxing_clip` returns `Command(update={ coaching_data, coaching_status })`
- * on the Python agent. CopilotKit mirrors that into `useAgent().state` (STATE_SNAPSHOT).
- * We do **not** parse tool output in a frontend tool — that would duplicate work and miss
- * the snapshot the starter already uses for the CRM canvas.
+ * CoachMe+ — CopilotKit v2: LangGraph `Command` updates canvas state; generative UI
+ * via `useFrontendTool` (highlightTechnique, generateDrill).
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { z } from "zod";
 import { Toaster, toast } from "sonner";
 import {
   CopilotChatConfigurationProvider,
   CopilotSidebar,
   useAgent,
   useConfigureSuggestions,
+  useCopilotKit,
   useDefaultRenderTool,
+  useFrontendTool,
 } from "@copilotkit/react-core/v2";
 
 import CoachingCanvas from "@/components/coaching/CoachingCanvas";
+import CoachGenDrillCard from "@/components/coaching/CoachGenDrillCard";
 import { ToolFallbackCard } from "@/components/copilot/ToolFallbackCard";
 import { ThreadsDrawer } from "@/components/threads-drawer";
 import drawerStyles from "@/components/threads-drawer/threads-drawer.module.css";
@@ -44,15 +44,31 @@ function canvasStatusFromAgent(state: AgentState): CoachingSessionStatus {
 
 function CoachCanvasInner() {
   const { agent } = useAgent();
+  const { copilotkit } = useCopilotKit();
   const state = useMemo(() => mergeAgentState(agent?.state), [agent?.state]);
 
   const pushAgentState = useCallback(
     (patch: Partial<AgentState>) => {
       if (!agent) return;
-      const next = { ...mergeAgentState(agent.state), ...patch };
-      agent.setState(next);
+      agent.setState({ ...mergeAgentState(agent.state), ...patch });
     },
     [agent],
+  );
+
+  const injectPrompt = useCallback(
+    (prompt: string) => {
+      if (!agent) return;
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `msg-${Date.now()}`;
+      agent.addMessage({ id, role: "user", content: prompt });
+      void copilotkit.runAgent({ agent }).catch((error: unknown) => {
+        console.error("injectPrompt: runAgent failed", error);
+        toast.error("Could not send message to the agent.");
+      });
+    },
+    [agent, copilotkit],
   );
 
   const loadMock = useCallback(async () => {
@@ -66,6 +82,10 @@ function CoachCanvasInner() {
       pushAgentState({
         coaching_data: data,
         coaching_status: "complete",
+        approved_drills: [],
+        skipped_drills: [],
+        // Offline preview: treat as one “virtual” clip so SessionSummary isn’t empty.
+        clips_analyzed: 1,
       });
       toast.success("Loaded mock coaching JSON into agent state");
     } catch {
@@ -82,11 +102,48 @@ function CoachCanvasInner() {
           "Analyze my boxing clip with analyze_boxing_clip. My TwelveLabs video_id is YOUR_VIDEO_ID.",
       },
       {
-        title: "Similar technique search",
-        message:
-          'Search my index for footage similar to a crisp leading jab with search_similar_techniques.',
+        title: "Fix my jab",
+        message: "How do I fix my jab? Give me a drill with generateDrill.",
       },
     ],
+  });
+
+  useFrontendTool({
+    name: "highlightTechnique",
+    description:
+      "Highlight a technique the agent wants the athlete to focus on. Call once after analysis for the weakest technique.",
+    parameters: z.object({
+      technique: z.string(),
+      insight: z.string(),
+    }),
+    render: ({ args }) => (
+      <div className="my-2 rounded-xl border-2 border-amber-400 bg-amber-50 p-4 dark:border-amber-500/60 dark:bg-amber-950/30">
+        <p className="font-semibold text-foreground">
+          🔍 Agent focus: {args.technique}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{args.insight}</p>
+      </div>
+    ),
+  });
+
+  useFrontendTool({
+    name: "generateDrill",
+    description:
+      "Render a targeted drill card in chat. Use when the user asks for a fix, drill, or correction work.",
+    parameters: z.object({
+      name: z.string(),
+      reps: z.number(),
+      focus: z.string(),
+      reason: z.string(),
+    }),
+    render: ({ args }) => (
+      <CoachGenDrillCard
+        name={args.name ?? "Drill"}
+        reps={args.reps ?? 10}
+        focus={args.focus ?? ""}
+        reason={args.reason ?? ""}
+      />
+    ),
   });
 
   useDefaultRenderTool({
@@ -101,6 +158,15 @@ function CoachCanvasInner() {
   });
 
   const canvasStatus = canvasStatusFromAgent(state);
+
+  const handleMarkerAction = useCallback(
+    (ts: { time: number; label: string }) => {
+      injectPrompt(
+        `I clicked the correction at ${ts.time}s: "${ts.label}". Call generateDrill with one targeted drill for this specific flaw.`,
+      );
+    },
+    [injectPrompt],
+  );
 
   return (
     <>
@@ -122,8 +188,9 @@ function CoachCanvasInner() {
                 Load mock JSON
               </button>
               <span className="text-xs text-muted-foreground">
-                Live: shared LangGraph state via{" "}
-                <code className="rounded bg-muted px-1">useAgent</code>
+                Canvas: <code className="rounded bg-muted px-1">useAgent</code>{" "}
+                · Chat:{" "}
+                <code className="rounded bg-muted px-1">useFrontendTool</code>
               </span>
             </div>
           </div>
@@ -135,6 +202,36 @@ function CoachCanvasInner() {
           <CoachingCanvas
             coachingData={state.coaching_data}
             status={canvasStatus}
+            approvedDrills={state.approved_drills}
+            skippedDrills={state.skipped_drills}
+            clipsAnalyzed={state.clips_analyzed}
+            agentCoachingStatus={state.coaching_status}
+            onApproveDrill={(name) => {
+              if (state.approved_drills.includes(name)) return;
+              pushAgentState({
+                approved_drills: [...state.approved_drills, name],
+              });
+            }}
+            onSkipDrill={(name) => {
+              if (state.skipped_drills.includes(name)) return;
+              pushAgentState({
+                skipped_drills: [...state.skipped_drills, name],
+              });
+            }}
+            onResetDrillChoices={() => {
+              pushAgentState({
+                approved_drills: [],
+                skipped_drills: [],
+              });
+              toast.message("Cleared approve/skip lists for this thread.");
+            }}
+            onAnalyzeAnother={() => {
+              pushAgentState({
+                coaching_data: null,
+                coaching_status: "idle",
+              });
+            }}
+            onMarkerAction={handleMarkerAction}
           />
         </main>
       </div>
